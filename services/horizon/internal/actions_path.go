@@ -4,6 +4,8 @@ import (
 	"github.com/stellar/go/services/horizon/internal/paths"
 	"github.com/stellar/go/services/horizon/internal/render/hal"
 	"github.com/stellar/go/services/horizon/internal/resource"
+	"github.com/stellar/go/services/horizon/internal/log"
+	"github.com/stellar/go/xdr"
 )
 
 // PathIndexAction provides path finding
@@ -35,6 +37,19 @@ func (action *PathIndexAction) loadQuery() {
 }
 
 func (action *PathIndexAction) loadSourceAssets() {
+	if action.MaybeGetAsset("source_") == (xdr.Asset{}) {
+		asset := action.GetAsset("source_")
+		log.Debug(asset)
+
+		action.Err = action.CoreQ().LoadAssetForAddress(
+			&action.Query.SourceAssets,
+			action.GetAddress("source_account"),
+			action.GetString("source_asset_type"),
+			action.GetString("source_asset_code"),
+			action.GetString("source_asset_issuer"),
+		)
+		return
+	}
 	action.Err = action.CoreQ().AssetsForAddress(
 		&action.Query.SourceAssets,
 		action.GetAddress("source_account"),
