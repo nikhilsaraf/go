@@ -18,6 +18,7 @@ ALTER TABLE IF EXISTS ONLY public.history_trades DROP CONSTRAINT IF EXISTS histo
 ALTER TABLE IF EXISTS ONLY public.history_trades DROP CONSTRAINT IF EXISTS history_trades_counter_account_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.history_trades DROP CONSTRAINT IF EXISTS history_trades_base_asset_id_fkey;
 ALTER TABLE IF EXISTS ONLY public.history_trades DROP CONSTRAINT IF EXISTS history_trades_base_account_id_fkey;
+ALTER TABLE IF EXISTS ONLY public.asset_stats DROP CONSTRAINT IF EXISTS asset_stats_id_fkey;
 DROP INDEX IF EXISTS public.trade_effects_by_order_book;
 DROP INDEX IF EXISTS public.index_history_transactions_on_id;
 DROP INDEX IF EXISTS public.index_history_operations_on_type;
@@ -54,6 +55,7 @@ ALTER TABLE IF EXISTS ONLY public.history_operation_participants DROP CONSTRAINT
 ALTER TABLE IF EXISTS ONLY public.history_assets DROP CONSTRAINT IF EXISTS history_assets_pkey;
 ALTER TABLE IF EXISTS ONLY public.history_assets DROP CONSTRAINT IF EXISTS history_assets_asset_code_asset_type_asset_issuer_key;
 ALTER TABLE IF EXISTS ONLY public.gorp_migrations DROP CONSTRAINT IF EXISTS gorp_migrations_pkey;
+ALTER TABLE IF EXISTS ONLY public.asset_stats DROP CONSTRAINT IF EXISTS asset_stats_pkey;
 ALTER TABLE IF EXISTS public.history_transaction_participants ALTER COLUMN id DROP DEFAULT;
 ALTER TABLE IF EXISTS public.history_operation_participants ALTER COLUMN id DROP DEFAULT;
 ALTER TABLE IF EXISTS public.history_assets ALTER COLUMN id DROP DEFAULT;
@@ -71,6 +73,7 @@ DROP TABLE IF EXISTS public.history_assets;
 DROP TABLE IF EXISTS public.history_accounts;
 DROP SEQUENCE IF EXISTS public.history_accounts_id_seq;
 DROP TABLE IF EXISTS public.gorp_migrations;
+DROP TABLE IF EXISTS public.asset_stats;
 DROP SCHEMA IF EXISTS public;
 --
 -- Name: public; Type: SCHEMA; Schema: -; Owner: -
@@ -91,6 +94,19 @@ SET search_path = public, pg_catalog;
 SET default_tablespace = '';
 
 SET default_with_oids = false;
+
+--
+-- Name: asset_stats; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE asset_stats (
+    id bigint NOT NULL,
+    amount bigint NOT NULL,
+    num_accounts integer NOT NULL,
+    flags smallint NOT NULL,
+    toml character varying(64) NOT NULL
+);
+
 
 --
 -- Name: gorp_migrations; Type: TABLE; Schema: public; Owner: -
@@ -336,16 +352,23 @@ ALTER TABLE ONLY history_transaction_participants ALTER COLUMN id SET DEFAULT ne
 
 
 --
+-- Data for Name: asset_stats; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
 -- Data for Name: gorp_migrations; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-INSERT INTO gorp_migrations VALUES ('1_initial_schema.sql', '2017-10-25 12:02:41.355815-07');
-INSERT INTO gorp_migrations VALUES ('2_index_participants_by_toid.sql', '2017-10-25 12:02:41.35913-07');
-INSERT INTO gorp_migrations VALUES ('3_use_sequence_in_history_accounts.sql', '2017-10-25 12:02:41.361119-07');
-INSERT INTO gorp_migrations VALUES ('4_add_protocol_version.sql', '2017-10-25 12:02:41.365998-07');
-INSERT INTO gorp_migrations VALUES ('5_create_trades_table.sql', '2017-10-25 12:02:41.370443-07');
-INSERT INTO gorp_migrations VALUES ('6_create_assets_table.sql', '2017-10-25 12:02:41.373746-07');
-INSERT INTO gorp_migrations VALUES ('7_modify_trades_table.sql', '2017-10-25 12:02:41.381902-07');
+INSERT INTO gorp_migrations VALUES ('1_initial_schema.sql', '2017-11-01 11:58:51.584253-07');
+INSERT INTO gorp_migrations VALUES ('2_index_participants_by_toid.sql', '2017-11-01 11:58:51.587563-07');
+INSERT INTO gorp_migrations VALUES ('3_use_sequence_in_history_accounts.sql', '2017-11-01 11:58:51.589682-07');
+INSERT INTO gorp_migrations VALUES ('4_add_protocol_version.sql', '2017-11-01 11:58:51.595937-07');
+INSERT INTO gorp_migrations VALUES ('5_create_trades_table.sql', '2017-11-01 11:58:51.601025-07');
+INSERT INTO gorp_migrations VALUES ('6_create_assets_table.sql', '2017-11-01 11:58:51.604418-07');
+INSERT INTO gorp_migrations VALUES ('7_modify_trades_table.sql', '2017-11-01 11:58:51.611596-07');
+INSERT INTO gorp_migrations VALUES ('8_create_asset_stats_table.sql', '2017-11-01 11:58:51.614368-07');
 
 
 --
@@ -428,6 +451,14 @@ SELECT pg_catalog.setval('history_transaction_participants_id_seq', 1, false);
 -- Data for Name: history_transactions; Type: TABLE DATA; Schema: public; Owner: -
 --
 
+
+
+--
+-- Name: asset_stats asset_stats_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY asset_stats
+    ADD CONSTRAINT asset_stats_pkey PRIMARY KEY (id);
 
 
 --
@@ -685,6 +716,14 @@ CREATE UNIQUE INDEX index_history_transactions_on_id ON history_transactions USI
 --
 
 CREATE INDEX trade_effects_by_order_book ON history_effects USING btree (((details ->> 'sold_asset_type'::text)), ((details ->> 'sold_asset_code'::text)), ((details ->> 'sold_asset_issuer'::text)), ((details ->> 'bought_asset_type'::text)), ((details ->> 'bought_asset_code'::text)), ((details ->> 'bought_asset_issuer'::text))) WHERE (type = 33);
+
+
+--
+-- Name: asset_stats asset_stats_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY asset_stats
+    ADD CONSTRAINT asset_stats_id_fkey FOREIGN KEY (id) REFERENCES history_assets(id) ON UPDATE RESTRICT ON DELETE CASCADE;
 
 
 --
