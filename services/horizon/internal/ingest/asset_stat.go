@@ -30,16 +30,13 @@ func UpdateAssetStats(is *Session, assetsModified *map[string]xdr.Asset) {
 				assetStat.NumAccounts,
 				assetStat.Flags,
 				assetStat.Toml,
-			).Suffix("ON CONFLICT (id) DO UPDATE SET (amount, num_accounts, flags, toml) = (?, ?, ?, ?)",
-				assetStat.Amount,
-				assetStat.NumAccounts,
-				assetStat.Flags,
-				assetStat.Toml,
 			)
 		}
 	}
 
 	if hasValue {
+		is.Ingestion.assetStats = is.Ingestion.assetStats.
+			Suffix("ON CONFLICT (id) DO UPDATE SET (amount, num_accounts, flags, toml) = (excluded.amount, excluded.num_accounts, excluded.flags, excluded.toml)")
 		_, is.Err = is.Ingestion.DB.Exec(is.Ingestion.assetStats)
 	}
 }
