@@ -3,12 +3,13 @@ package ingest
 import (
 	"testing"
 
+	sq "github.com/Masterminds/squirrel"
+	"github.com/stellar/go/services/horizon/internal/db2/core"
+	"github.com/stellar/go/services/horizon/internal/db2/history"
+	"github.com/stellar/go/services/horizon/internal/test"
+	testDB "github.com/stellar/go/services/horizon/internal/test/db"
 	"github.com/stellar/go/support/db"
 	"github.com/stellar/go/xdr"
-	"github.com/stellar/go/services/horizon/internal/db2/core"
-	testDB "github.com/stellar/go/services/horizon/internal/test/db"
-	"github.com/stellar/go/services/horizon/internal/test"
-	"github.com/stellar/go/services/horizon/internal/db2/history"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -61,14 +62,82 @@ func TestAssetIngest(t *testing.T) {
 	q := history.Q{Session: s.Ingestion.DB}
 
 	expectedAsset := history.Asset{
-		ID     : 4,
-		Type   : "credit_alphanum4",
-		Code   : "USD",
-		Issuer : "GB2QIYT2IAUFMRXKLSLLPRECC6OCOGJMADSPTRK7TGNT2SFR2YGWDARD",
+		ID:     4,
+		Type:   "credit_alphanum4",
+		Code:   "USD",
+		Issuer: "GB2QIYT2IAUFMRXKLSLLPRECC6OCOGJMADSPTRK7TGNT2SFR2YGWDARD",
 	}
 
 	actualAsset := history.Asset{}
 	err := q.GetAssetByID(&actualAsset, 4)
 	tt.Require.NoError(err)
 	tt.Assert.Equal(expectedAsset, actualAsset)
+}
+
+func TestAssetStatsCount(t *testing.T) {
+	tt := test.Start(t).ScenarioWithoutHorizon("kahuna")
+	defer tt.Finish()
+	s := ingest(tt)
+	q := history.Q{Session: s.Ingestion.DB}
+
+	var countHistory int
+	err := q.Get(&countHistory, sq.Select("COUNT(*)").From("history_assets").Where(sq.NotEq{"asset_type": "native"}))
+	tt.Require.NoError(err)
+
+	var countStats int
+	err = q.Get(&countStats, sq.Select("COUNT(*)").From("asset_stats"))
+	tt.Require.NoError(err)
+
+	tt.Assert.Equal(countHistory, countStats)
+}
+
+func TestAssetStatsChangeTrust(t *testing.T) {
+	tt := test.Start(t).ScenarioWithoutHorizon("change_trust")
+	defer tt.Finish()
+	s := ingest(tt)
+	q := history.Q{Session: s.Ingestion.DB}
+
+	var countStats int
+	err := q.Get(&countStats, sq.Select("COUNT(*)").From("asset_stats"))
+	tt.Require.NoError(err)
+	tt.Assert.Equal(1, countStats)
+
+	sql := sq.
+		Select(
+			"hist.id",
+			"hist.asset_type",
+			"hist.asset_code",
+			"hist.asset_issuer",
+			"stats.amount",
+			"stats.num_accounts",
+			"stats.flags",
+			"stats.toml",
+		).
+		From("history_assets hist").
+		Join("asset_stats stats ON hist.id = stats.id").
+		Limit(1)
+
+	type AssetStatResult struct {
+		ID          int64  `db:"id"`
+		Type        string `db:"asset_type"`
+		Code        string `db:"asset_code"`
+		Issuer      string `db:"asset_issuer"`
+		Amount      int64  `db:"amount"`
+		NumAccounts int32  `db:"num_accounts"`
+		Flags       int8   `db:"flags"`
+		Toml        string `db:"toml"`
+	}
+	actualStat := AssetStatResult{}
+	err = q.Get(&actualStat, sql)
+	tt.Require.NoError(err)
+	tt.Assert.Equal(AssetStatResult{
+		ID:          1,
+		Type:        "credit_alphanum4",
+		Code:        "USD",
+		Issuer:      "GC23QF2HUE52AMXUFUH3AYJAXXGXXV2VHXYYR6EYXETPKDXZSAW67XO4",
+		Amount:      10,
+		NumAccounts: 5,
+		Flags:       0,
+		Toml:        "https://www.stellar.org/.well-known/stellar.toml",
+	}, actualStat)
 }

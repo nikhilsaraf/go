@@ -13,6 +13,7 @@ import (
 	"github.com/stellar/go/amount"
 	"github.com/stellar/go/keypair"
 	"github.com/stellar/go/meta"
+	"github.com/stellar/go/services/horizon/internal/db2/core"
 	"github.com/stellar/go/services/horizon/internal/db2/history"
 	"github.com/stellar/go/services/horizon/internal/ingest/participants"
 	"github.com/stellar/go/xdr"
@@ -96,6 +97,16 @@ func (is *Session) flush() {
 	is.Err = is.Ingestion.Flush()
 }
 
+func addAssetsFromAccount(is *Session, assetsModified *map[string]xdr.Asset, account *xdr.AccountId) {
+	coreQ := core.Q{Session: is.Ingestion.DB}
+	var assets []xdr.Asset
+	coreQ.AssetsForAddress(&assets, account.Address())
+
+	for _, asset := range assets {
+		(*assetsModified)[asset.String()] = asset
+	}
+}
+
 func (is *Session) addAssetsModified(assetsModified *map[string]xdr.Asset) {
 	if is.Err != nil {
 		return
@@ -103,8 +114,11 @@ func (is *Session) addAssetsModified(assetsModified *map[string]xdr.Asset) {
 
 	body := is.Cursor.Operation().Body
 	switch body.Type {
-	// TODO NNS 1 add all assets touched by destination account in xdr.OperationTypeAccountMerge
-	// or accumulate all these accounts and fetch their assets in bulk
+	case xdr.OperationTypeAccountMerge:
+		addAssetsFromAccount(is, assetsModified, body.Destination)
+		addAssetsFromAccount(is, assetsModified, is.Cursor.Operation().SourceAccount)
+	case xdr.OperationTypeSetOptions:
+		addAssetsFromAccount(is, assetsModified, is.Cursor.Operation().SourceAccount)
 	case xdr.OperationTypePayment:
 		(*assetsModified)[body.PaymentOp.Asset.String()] = body.PaymentOp.Asset
 	case xdr.OperationTypePathPayment:
