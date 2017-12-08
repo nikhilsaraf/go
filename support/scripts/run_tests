@@ -1,11 +1,15 @@
 #! /bin/bash
 set -e
 
-TESTS=$(glide novendor | sed 's/^\./github.com\/stellar\/go/g')
+run () {
+    if [ "$CGO_ENABLED" = "1" ]
+    then
+      exec go test -race $1
+    else
+      exec go test $1
+    fi
+    return 0
+}
+export -f run
 
-if [ "$CGO_ENABLED" = "1" ] 
-then
-  exec go test -race $TESTS
-else
-  exec go test $TESTS
-fi
+glide novendor | sed 's/^\./github.com\/stellar\/go/g' | xargs -I {} -P 4 sh -c "run {}"
