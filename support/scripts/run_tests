@@ -4,12 +4,14 @@ set -e
 run () {
     if [ "$CGO_ENABLED" = "1" ]
     then
-      exec go test -race $1
+      go test -race $1
     else
-      exec go test $1
+      go test $1
     fi
+
     return 0
 }
+
 export -f run
 
 if [ `uname` = "Darwin" ]
