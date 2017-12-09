@@ -18,5 +18,5 @@ if [ `uname` = "Darwin" ]
 then
     glide novendor | sed 's/^\./github.com\/stellar\/go/g' | xargs -I TEST -P 4 sh -c "run TEST"
 else
-    glide novendor | sed 's/^\./github.com\/stellar\/go/g' | xargs -I TEST -P 4 echo "$(run TEST)"
+    glide novendor | sed 's/^\./github.com\/stellar\/go/g' | xargs -I TEST -P 4 echo "$(run $TEST)"
 fi
