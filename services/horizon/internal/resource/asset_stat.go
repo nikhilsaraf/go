@@ -3,7 +3,7 @@ package resource
 import (
 	"github.com/stellar/go/amount"
 	"github.com/stellar/go/services/horizon/internal/db2/assets"
-	"github.com/stellar/go/services/horizon/internal/render/hal"
+	"github.com/stellar/go/services/horizon/render/hal"
 	"github.com/stellar/go/xdr"
 	"golang.org/x/net/context"
 )
