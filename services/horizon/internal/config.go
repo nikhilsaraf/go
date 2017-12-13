@@ -14,6 +14,7 @@ type Config struct {
 	Port                   int
 	RateLimit              throttled.Quota
 	RedisURL               string
+	FriendbotURL           string
 	LogLevel               logrus.Level
 	SentryDSN              string
 	LogglyHost             string

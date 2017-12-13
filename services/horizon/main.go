@@ -33,6 +33,7 @@ func init() {
 	viper.BindEnv("per-hour-rate-limit", "PER_HOUR_RATE_LIMIT")
 	viper.BindEnv("redis-url", "REDIS_URL")
 	viper.BindEnv("ruby-horizon-url", "RUBY_HORIZON_URL")
+	viper.BindEnv("friendbot-url", "FRIENDBOT_URL")
 	viper.BindEnv("log-level", "LOG_LEVEL")
 	viper.BindEnv("sentry-dsn", "SENTRY_DSN")
 	viper.BindEnv("loggly-token", "LOGGLY_TOKEN")
@@ -89,6 +90,12 @@ func init() {
 		"redis-url",
 		"",
 		"redis to connect with, for rate limiting",
+	)
+
+	rootCmd.Flags().String(
+		"friendbot-url",
+		"",
+		"friendbot service to redirect to",
 	)
 
 	rootCmd.Flags().String(
@@ -204,6 +211,7 @@ func initConfig() {
 		Port:                   viper.GetInt("port"),
 		RateLimit:              throttled.PerHour(viper.GetInt("per-hour-rate-limit")),
 		RedisURL:               viper.GetString("redis-url"),
+		FriendbotURL:           viper.GetString("friendbot-url"),
 		LogLevel:               ll,
 		SentryDSN:              viper.GetString("sentry-dsn"),
 		LogglyToken:            viper.GetString("loggly-token"),
