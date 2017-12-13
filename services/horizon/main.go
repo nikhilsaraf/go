@@ -30,7 +30,6 @@ func init() {
 	viper.BindEnv("db-url", "DATABASE_URL")
 	viper.BindEnv("stellar-core-db-url", "STELLAR_CORE_DATABASE_URL")
 	viper.BindEnv("stellar-core-url", "STELLAR_CORE_URL")
-	viper.BindEnv("friendbot-secret", "FRIENDBOT_SECRET")
 	viper.BindEnv("per-hour-rate-limit", "PER_HOUR_RATE_LIMIT")
 	viper.BindEnv("redis-url", "REDIS_URL")
 	viper.BindEnv("ruby-horizon-url", "RUBY_HORIZON_URL")
@@ -114,12 +113,6 @@ func init() {
 		"loggly-host",
 		"",
 		"Hostname to be added to every loggly log event",
-	)
-
-	rootCmd.Flags().String(
-		"friendbot-secret",
-		"",
-		"Secret seed for friendbot functionality. When empty, friendbot will be disabled",
 	)
 
 	rootCmd.Flags().String(
@@ -215,7 +208,6 @@ func initConfig() {
 		SentryDSN:              viper.GetString("sentry-dsn"),
 		LogglyToken:            viper.GetString("loggly-token"),
 		LogglyHost:             viper.GetString("loggly-host"),
-		FriendbotSecret:        viper.GetString("friendbot-secret"),
 		TLSCert:                cert,
 		TLSKey:                 key,
 		Ingest:                 viper.GetBool("ingest"),

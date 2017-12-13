@@ -1,35 +1,36 @@
-package horizon
+package internal
 
 import (
 	"net/http"
 
-	"github.com/stellar/go/services/horizon/internal/render/hal"
-	"github.com/stellar/go/services/horizon/internal/render/problem"
+	client "github.com/stellar/go/clients/horizon"
+	"github.com/stellar/go/services/horizon/actions"
+	"github.com/stellar/go/services/horizon/render/hal"
+	"github.com/stellar/go/services/horizon/render/problem"
 	"github.com/zenazn/goji/web"
 )
 
 // FriendbotAction causes an account at `Address` to be created.
 type FriendbotAction struct {
-	TransactionCreateAction
+	Friendbot *Bot
+	actions.Base
 	Address string
+	Result  client.TransactionSuccess
 }
 
 // JSON is a method for actions.JSON
 func (action *FriendbotAction) JSON() {
-
 	action.Do(
 		action.checkEnabled,
 		action.loadAddress,
 		action.loadResult,
-		action.loadResource,
-
 		func() {
-			hal.Render(action.W, action.Resource)
+			hal.Render(action.W, action.Result)
 		})
 }
 
 func (action *FriendbotAction) checkEnabled() {
-	if action.App.friendbot != nil {
+	if action.Friendbot != nil {
 		return
 	}
 
@@ -47,14 +48,12 @@ func (action *FriendbotAction) loadAddress() {
 }
 
 func (action *FriendbotAction) loadResult() {
-	action.Result = action.App.friendbot.Pay(action.Ctx, action.Address)
+	action.Result, action.Err = action.Friendbot.Pay(action.Address)
 }
 
-// ServeHTTPC implements Action for FriendbotAction.  NOTE: We cannot use the
-// generated stub because FriendbotAction doesn't directly instantiate the
-// template.
+// ServeHTTPC implements Action for FriendbotAction.
 func (action FriendbotAction) ServeHTTPC(c web.C, w http.ResponseWriter, r *http.Request) {
-	ap := &action.Action
+	ap := &action.Base
 	ap.Prepare(c, w, r)
 	ap.Execute(&action)
 }
