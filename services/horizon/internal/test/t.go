@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 
 	"github.com/stellar/go/services/horizon/internal/ledger"
-	"github.com/stellar/go/services/horizon/render/hal"
+	"github.com/stellar/go/services/horizon/internal/render/hal"
 	"github.com/stellar/go/support/db"
 )
 

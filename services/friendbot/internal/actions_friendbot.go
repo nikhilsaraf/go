@@ -5,8 +5,8 @@ import (
 
 	client "github.com/stellar/go/clients/horizon"
 	"github.com/stellar/go/services/horizon/internal/actions"
-	"github.com/stellar/go/services/horizon/render/hal"
-	"github.com/stellar/go/services/horizon/render/problem"
+	"github.com/stellar/go/services/horizon/internal/render/hal"
+	"github.com/stellar/go/services/horizon/internal/render/problem"
 	"github.com/zenazn/goji/web"
 )
 

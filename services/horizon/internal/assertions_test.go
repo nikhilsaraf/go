@@ -7,7 +7,7 @@ import (
 	"net/url"
 
 	"github.com/stellar/go/services/horizon/internal/test"
-	"github.com/stellar/go/services/horizon/render/problem"
+	"github.com/stellar/go/services/horizon/internal/render/problem"
 	"github.com/stretchr/testify/assert"
 )
 

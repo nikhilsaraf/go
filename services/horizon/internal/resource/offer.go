@@ -5,7 +5,7 @@ import (
 	"github.com/stellar/go/services/horizon/httpx"
 	"github.com/stellar/go/services/horizon/internal/assets"
 	"github.com/stellar/go/services/horizon/internal/db2/core"
-	"github.com/stellar/go/services/horizon/render/hal"
+	"github.com/stellar/go/services/horizon/internal/render/hal"
 	"golang.org/x/net/context"
 )
 

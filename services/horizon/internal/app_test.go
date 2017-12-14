@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/stellar/go/services/horizon/internal/test"
-	"github.com/stellar/go/services/horizon/render/sse"
+	"github.com/stellar/go/services/horizon/internal/render/sse"
 )
 
 func TestNewApp(t *testing.T) {

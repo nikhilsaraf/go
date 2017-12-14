@@ -12,7 +12,7 @@ import (
 	"github.com/stellar/go/services/horizon/internal/ledger"
 	"github.com/stellar/go/services/horizon/internal/log"
 	"github.com/stellar/go/services/horizon/internal/toid"
-	"github.com/stellar/go/services/horizon/render/problem"
+	"github.com/stellar/go/services/horizon/internal/render/problem"
 	"github.com/zenazn/goji/web"
 )
 

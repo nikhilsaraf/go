@@ -9,7 +9,7 @@ import (
 	"github.com/stellar/go/services/horizon/internal/resource/base"
 	"github.com/stellar/go/services/horizon/internal/resource/effects"
 	"github.com/stellar/go/services/horizon/internal/resource/operations"
-	"github.com/stellar/go/services/horizon/render/hal"
+	"github.com/stellar/go/services/horizon/internal/render/hal"
 	"github.com/stellar/go/strkey"
 	"github.com/stellar/go/support/errors"
 	"golang.org/x/net/context"

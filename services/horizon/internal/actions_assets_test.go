@@ -5,7 +5,7 @@ import (
 
 	"github.com/stellar/go/services/horizon/internal/resource"
 	"github.com/stellar/go/services/horizon/internal/resource/base"
-	"github.com/stellar/go/services/horizon/render/hal"
+	"github.com/stellar/go/services/horizon/internal/render/hal"
 )
 
 func TestAssetsActions(t *testing.T) {
