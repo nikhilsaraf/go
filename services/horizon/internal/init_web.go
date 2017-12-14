@@ -12,7 +12,6 @@ import (
 	"github.com/sebest/xff"
 	"github.com/stellar/go/services/horizon/internal/db2"
 	"github.com/stellar/go/services/horizon/internal/txsub/sequence"
-	hm "github.com/stellar/go/services/horizon/middleware"
 	"github.com/stellar/go/services/horizon/render/problem"
 	"github.com/zenazn/goji/web"
 	"github.com/zenazn/goji/web/middleware"
@@ -51,15 +50,15 @@ func initWeb(app *App) {
 func initWebMiddleware(app *App) {
 
 	r := app.web.router
-	r.Use(hm.StripTrailingSlashMiddleware())
+	r.Use(stripTrailingSlashMiddleware())
 	r.Use(middleware.EnvInit)
 	r.Use(app.Middleware)
 	r.Use(middleware.RequestID)
-	r.Use(hm.ContextMiddleware(app.ctx))
+	r.Use(contextMiddleware(app.ctx))
 	r.Use(xff.Handler)
-	r.Use(hm.LoggerMiddleware)
+	r.Use(LoggerMiddleware)
 	r.Use(requestMetricsMiddleware)
-	r.Use(hm.RecoverMiddleware)
+	r.Use(RecoverMiddleware)
 	r.Use(middleware.AutomaticOptions)
 
 	c := cors.New(cors.Options{

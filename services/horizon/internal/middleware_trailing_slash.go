@@ -6,8 +6,7 @@ import (
 	"github.com/zenazn/goji/web"
 )
 
-// StripTrailingSlashMiddleware strips the trailing slash from requests
-func StripTrailingSlashMiddleware() func(c *web.C, next http.Handler) http.Handler {
+func stripTrailingSlashMiddleware() func(c *web.C, next http.Handler) http.Handler {
 	return func(c *web.C, next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
 			path := r.URL.Path

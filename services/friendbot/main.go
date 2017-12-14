@@ -13,7 +13,7 @@ import (
 	"github.com/rs/cors"
 	"github.com/spf13/cobra"
 	"github.com/stellar/go/services/friendbot/internal"
-	hm "github.com/stellar/go/services/horizon/middleware"
+	hm "github.com/stellar/go/services/horizon/internal"
 	"github.com/stellar/go/support/config"
 	"github.com/stellar/go/support/log"
 	"github.com/tylerb/graceful"

@@ -4,14 +4,13 @@ import (
 	"net/http"
 
 	gctx "github.com/goji/context"
-	"github.com/stellar/go/services/horizon/httpx"
 	"github.com/stellar/go/services/horizon/internal/context/requestid"
+	"github.com/stellar/go/services/horizon/internal/httpx"
 	"github.com/zenazn/goji/web"
 	"golang.org/x/net/context"
 )
 
-// ContextMiddleware extends the context to be a request context
-func ContextMiddleware(parent context.Context) func(c *web.C, next http.Handler) http.Handler {
+func contextMiddleware(parent context.Context) func(c *web.C, next http.Handler) http.Handler {
 	return func(c *web.C, next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
 			ctx := parent
