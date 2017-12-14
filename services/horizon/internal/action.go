@@ -5,8 +5,8 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/stellar/go/services/horizon/actions"
 	"github.com/stellar/go/services/horizon/httpx"
+	"github.com/stellar/go/services/horizon/internal/actions"
 	"github.com/stellar/go/services/horizon/internal/db2/core"
 	"github.com/stellar/go/services/horizon/internal/db2/history"
 	"github.com/stellar/go/services/horizon/internal/ledger"
