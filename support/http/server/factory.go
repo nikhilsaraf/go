@@ -23,4 +23,5 @@ func EmptyConfig() *Config {
 func AddBasicMiddleware(c *Config) {
 	c.Middleware(middleware.RequestID)
 	c.Middleware(middleware.Recoverer)
+	c.Middleware(BindLoggerMiddleware(middleware.RequestIDKey))
 }

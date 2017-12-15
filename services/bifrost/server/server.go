@@ -13,7 +13,6 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/stellar/go/keypair"
 	"github.com/stellar/go/services/bifrost/bitcoin"
@@ -21,6 +20,7 @@ import (
 	"github.com/stellar/go/services/bifrost/database"
 	"github.com/stellar/go/services/bifrost/ethereum"
 	"github.com/stellar/go/support/errors"
+	"github.com/stellar/go/support/http/server"
 	"github.com/stellar/go/support/log"
 	"github.com/stellar/go/xdr"
 )
@@ -113,17 +113,19 @@ func (s *Server) shutdown() {
 }
 
 func (s *Server) startHTTPServer() {
-	r := chi.NewRouter()
+	muxConfig := server.EmptyConfig()
+
 	if s.Config.UsingProxy {
-		r.Use(middleware.RealIP)
+		muxConfig.Middleware(middleware.RealIP)
 	}
-	r.Use(middleware.RequestID)
-	r.Use(middleware.Recoverer)
-	r.Use(s.loggerMiddleware)
-	r.Get("/events", s.HandlerEvents)
-	r.Post("/generate-bitcoin-address", s.HandlerGenerateBitcoinAddress)
-	r.Post("/generate-ethereum-address", s.HandlerGenerateEthereumAddress)
-	r.Post("/recovery-transaction", s.HandlerRecoveryTransaction)
+	server.AddBasicMiddleware(muxConfig)
+
+	muxConfig.Route(http.MethodGet, "/events", s.HandlerEvents)
+	muxConfig.Route(http.MethodPost, "/generate-bitcoin-address", s.HandlerGenerateBitcoinAddress)
+	muxConfig.Route(http.MethodPost, "/generate-ethereum-address", s.HandlerGenerateEthereumAddress)
+	muxConfig.Route(http.MethodPost, "/recovery-transaction", s.HandlerRecoveryTransaction)
+
+	r := server.NewRouter(muxConfig)
 
 	log.WithField("port", s.Config.Port).Info("Starting HTTP server")
 
@@ -140,36 +142,6 @@ func (s *Server) startHTTPServer() {
 			log.WithField("err", err).Fatal("Cannot start HTTP server")
 		}
 	}
-}
-
-func (s *Server) loggerMiddleware(next http.Handler) http.Handler {
-	fn := func(w http.ResponseWriter, r *http.Request) {
-		requestLog := s.log.WithFields(log.F{
-			"request_id": r.Context().Value(middleware.RequestIDKey),
-			"method":     r.Method,
-			"uri":        r.RequestURI,
-			"ip":         r.RemoteAddr,
-		})
-
-		requestLog.Info("HTTP request")
-
-		ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
-		requestStartTime := time.Now()
-
-		next.ServeHTTP(ww, r)
-
-		duration := big.NewRat(
-			time.Since(requestStartTime).Nanoseconds(),
-			int64(time.Second),
-		)
-
-		requestLog.WithFields(log.F{
-			"status":         ww.Status(),
-			"response_bytes": ww.BytesWritten(),
-			"duration":       duration.FloatString(8),
-		}).Info("HTTP response")
-	}
-	return http.HandlerFunc(fn)
 }
 
 func (s *Server) HandlerEvents(w http.ResponseWriter, r *http.Request) {
