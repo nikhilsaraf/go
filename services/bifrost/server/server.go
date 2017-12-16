@@ -6,7 +6,6 @@ package server
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"math/big"
 	"net/http"
 	"os"
@@ -127,21 +126,7 @@ func (s *Server) startHTTPServer() {
 
 	r := server.NewRouter(muxConfig)
 
-	log.WithField("port", s.Config.Port).Info("Starting HTTP server")
-
-	s.httpServer = &http.Server{
-		Addr:    fmt.Sprintf(":%d", s.Config.Port),
-		Handler: r,
-	}
-
-	err := s.httpServer.ListenAndServe()
-	if err != nil {
-		if err == http.ErrServerClosed {
-			log.Info("HTTP server closed")
-		} else {
-			log.WithField("err", err).Fatal("Cannot start HTTP server")
-		}
-	}
+	server.Serve(r, s.Config.Port, nil)
 }
 
 func (s *Server) HandlerEvents(w http.ResponseWriter, r *http.Request) {
