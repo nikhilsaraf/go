@@ -17,8 +17,14 @@ func TestFriendbot_makeTx(t *testing.T) {
 		sequence:        2,
 	}
 
-	_, err := fb.makeTx("GDJIN6W6PLTPKLLM57UW65ZH4BITUXUMYQHIMAZFYXF45PZVAWDBI77Z")
-	assert.NoError(t, err)
+	txn, err := fb.makeTx("GDJIN6W6PLTPKLLM57UW65ZH4BITUXUMYQHIMAZFYXF45PZVAWDBI77Z")
+	if !assert.NoError(t, err) {
+		return
+	}
+	expectedTxn := "AAAAAPuYf7x7KGvFX9fjCR9WIaoTX3yHJYwX6ZSx6w76HPjEAAAAZAAAAAAAAAADAAAAAAAAAAAAAAAB" +
+		"AAAAAAAAAAAAAAAA0ob63nrm9S1s7+lvdyfgUTpejMQOhgMlxcvOvzUFhhQAAAAAO5rKAAAAAAAAAAAB+hz4xAAAAEC" +
+		"zNV2yXevMYKzm7OhXX2gYwmLZ5V37yeRHUX3Vhb6eT8wkUtpj2vJsUwzLWjdKMyGonFCPkaG4twRFUVqBRLEH"
+	assert.Equal(t, expectedTxn, txn)
 
 	// ensure we're race free. NOTE:  presently, gb can't
 	// run with -race on... we'll confirm this works when
@@ -27,6 +33,7 @@ func TestFriendbot_makeTx(t *testing.T) {
 	wg.Add(2)
 	go func() {
 		_, err := fb.makeTx("GDJIN6W6PLTPKLLM57UW65ZH4BITUXUMYQHIMAZFYXF45PZVAWDBI77Z")
+		// don't assert on the txn value here because the ordering is not guaranteed between these 2 goroutines
 		assert.NoError(t, err)
 		wg.Done()
 	}()
