@@ -76,10 +76,9 @@ func initRouter(fb *internal.Bot) *chi.Mux {
 	})
 
 	// endpoints
-	routerConfig.Route(http.MethodGet, "/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Hello World"))
-	}))
-	// routerConfig.Route(http.MethodPost, "/", &internal.FriendbotAction{Friendbot: fb})
+	handler := &internal.FriendbotHandler{Friendbot: fb}
+	routerConfig.Route(http.MethodGet, "/", http.HandlerFunc(handler.Handle))
+	routerConfig.Route(http.MethodPost, "/", http.HandlerFunc(handler.Handle))
 
 	return server.NewRouter(routerConfig)
 }
