@@ -2,6 +2,7 @@ package internal
 
 import (
 	"strconv"
+	"strings"
 	"sync"
 
 	b "github.com/stellar/go/build"
@@ -33,7 +34,14 @@ func (bot *Bot) Pay(destAddress string) (client.TransactionSuccess, error) {
 		return client.TransactionSuccess{}, err
 	}
 
-	return bot.Client.SubmitTransaction(signed)
+	result, err := bot.Client.SubmitTransaction(signed)
+	if err != nil && strings.Contains(err.Error(), "tx_bad_seq") {
+		// force refresh sequence for bad sequence errors
+		bot.lock.Lock()
+		defer bot.lock.Unlock()
+		bot.refreshSequence()
+	}
+	return result, err
 }
 
 // establish initial sequence if needed
