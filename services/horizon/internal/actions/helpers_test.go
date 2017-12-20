@@ -10,7 +10,7 @@ import (
 	"github.com/stellar/go/services/horizon/internal/ledger"
 	"github.com/stellar/go/services/horizon/internal/test"
 	"github.com/stellar/go/services/horizon/internal/toid"
-	"github.com/stellar/go/services/horizon/internal/render/problem"
+	sProblem "github.com/stellar/go/support/render/problem"
 	"github.com/stellar/go/xdr"
 	"github.com/zenazn/goji/web"
 )
@@ -126,16 +126,16 @@ func TestGetInt32(t *testing.T) {
 	// overflows
 	action.Err = nil
 	_ = action.GetInt32("64max")
-	if tt.Assert.IsType(&problem.P{}, action.Err) {
-		p := action.Err.(*problem.P)
+	if tt.Assert.IsType(&sProblem.P{}, action.Err) {
+		p := action.Err.(*sProblem.P)
 		tt.Assert.Equal("bad_request", p.Type)
 		tt.Assert.Equal("64max", p.Extras["invalid_field"])
 	}
 
 	action.Err = nil
 	_ = action.GetInt32("64min")
-	if tt.Assert.IsType(&problem.P{}, action.Err) {
-		p := action.Err.(*problem.P)
+	if tt.Assert.IsType(&sProblem.P{}, action.Err) {
+		p := action.Err.(*sProblem.P)
 		tt.Assert.Equal("bad_request", p.Type)
 		tt.Assert.Equal("64min", p.Extras["invalid_field"])
 	}

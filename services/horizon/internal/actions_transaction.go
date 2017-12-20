@@ -11,6 +11,7 @@ import (
 	"github.com/stellar/go/services/horizon/internal/resource"
 	"github.com/stellar/go/services/horizon/internal/txsub"
 	halRender "github.com/stellar/go/support/render/hal"
+	sProblem "github.com/stellar/go/support/render/problem"
 )
 
 // This file contains the actions:
@@ -189,7 +190,7 @@ func (action *TransactionCreateAction) loadResource() {
 		rcr := resource.TransactionResultCodes{}
 		rcr.Populate(action.Ctx, err)
 
-		action.Err = &problem.P{
+		action.Err = &sProblem.P{
 			Type:   "transaction_failed",
 			Title:  "Transaction Failed",
 			Status: http.StatusBadRequest,
@@ -204,7 +205,7 @@ func (action *TransactionCreateAction) loadResource() {
 			},
 		}
 	case *txsub.MalformedTransactionError:
-		action.Err = &problem.P{
+		action.Err = &sProblem.P{
 			Type:   "transaction_malformed",
 			Title:  "Transaction Malformed",
 			Status: http.StatusBadRequest,

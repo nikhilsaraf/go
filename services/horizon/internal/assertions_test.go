@@ -6,8 +6,9 @@ import (
 
 	"net/url"
 
-	"github.com/stellar/go/services/horizon/internal/test"
 	"github.com/stellar/go/services/horizon/internal/render/problem"
+	"github.com/stellar/go/services/horizon/internal/test"
+	sProblem "github.com/stellar/go/support/render/problem"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -43,8 +44,8 @@ func (a *Assertions) PageOf(length int, body *bytes.Buffer) bool {
 
 // Problem asserts that `body` is a serialized problem equal to `expected`,
 // using Type and Status to compare for equality.
-func (a *Assertions) Problem(body *bytes.Buffer, expected problem.P) bool {
-	var actual problem.P
+func (a *Assertions) Problem(body *bytes.Buffer, expected sProblem.P) bool {
+	var actual sProblem.P
 	err := json.Unmarshal(body.Bytes(), &actual)
 	if !a.NoError(err, "failed to parse body") {
 		return false
@@ -66,13 +67,13 @@ func (a *Assertions) Problem(body *bytes.Buffer, expected problem.P) bool {
 // ProblemType asserts that the provided `body` is a JSON serialized problem
 // whose type is `typ`
 func (a *Assertions) ProblemType(body *bytes.Buffer, typ string) bool {
-	var actual problem.P
+	var actual sProblem.P
 	err := json.Unmarshal(body.Bytes(), &actual)
 	if !a.NoError(err, "failed to parse body") {
 		return false
 	}
 
-	return a.Problem(body, problem.P{Type: typ})
+	return a.Problem(body, sProblem.P{Type: typ})
 }
 
 // EqualUrlStrings asserts for equality between url strings, regardless of query params ordering

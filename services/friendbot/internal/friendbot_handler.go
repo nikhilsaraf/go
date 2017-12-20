@@ -1,12 +1,13 @@
 package internal
 
 import (
-	"errors"
 	"net/http"
 
 	client "github.com/stellar/go/clients/horizon"
 	"github.com/stellar/go/strkey"
+	"github.com/stellar/go/support/log"
 	"github.com/stellar/go/support/render/hal"
+	"github.com/stellar/go/support/render/problem"
 )
 
 // FriendbotHandler causes an account at `Address` to be created.
@@ -18,7 +19,7 @@ type FriendbotHandler struct {
 func (handler *FriendbotHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	result, err := handler.doHandle(r)
 	if err != nil {
-		w.Write([]byte(err.Error()))
+		problem.Render(log.DefaultLogger, w, err)
 		return
 	}
 
@@ -50,7 +51,12 @@ func (handler *FriendbotHandler) checkEnabled() error {
 		return nil
 	}
 
-	return errors.New("friendbot is disabled")
+	return &problem.P{
+		Type:   "friendbot_disabled",
+		Title:  "Friendbot is disabled",
+		Status: http.StatusForbidden,
+		Detail: "Friendbot is disabled on this network. Contact the server administrator if you believe this to be in error.",
+	}
 }
 
 func (handler *FriendbotHandler) loadAddress(r *http.Request) (string, error) {
