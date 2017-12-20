@@ -124,3 +124,31 @@ var ServerError = P{
 		"to the issue tracker at: https://github.com/stellar/go/services/horizon/internal/issues." +
 		" Please include this response in your issue.",
 }
+
+// NotFound is a well-known problem type.  Use it as a shortcut in your actions
+var NotFound = P{
+	Type:   "not_found",
+	Title:  "Resource Missing",
+	Status: http.StatusNotFound,
+	Detail: "The resource at the url requested was not found.  This is usually " +
+		"occurs for one of two reasons:  The url requested is not valid, or no " +
+		"data in our database could be found with the parameters provided.",
+}
+
+// BadRequest is a well-known problem type.  Use it as a shortcut
+// in your actions.
+var BadRequest = P{
+	Type:   "bad_request",
+	Title:  "Bad Request",
+	Status: http.StatusBadRequest,
+	Detail: "The request you sent was invalid in some way",
+}
+
+// MakeInvalidFieldProblem is a helper function to make a BadRequest with extras
+func MakeInvalidFieldProblem(name string, reason error) *P {
+	br := BadRequest
+	br.Extras = map[string]interface{}{}
+	br.Extras["invalid_field"] = name
+	br.Extras["reason"] = reason.Error()
+	return &br
+}

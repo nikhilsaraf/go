@@ -42,6 +42,11 @@ func NewRouter(c *Config) *chi.Mux {
 		}
 	}
 
+	// not found handler
+	if c.notFound != nil {
+		mux.NotFound(c.notFound)
+	}
+
 	return mux
 }
 

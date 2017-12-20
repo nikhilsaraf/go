@@ -2,6 +2,7 @@ package internal
 
 import (
 	"net/http"
+	"net/url"
 
 	client "github.com/stellar/go/clients/horizon"
 	"github.com/stellar/go/strkey"
@@ -23,11 +24,11 @@ func (handler *FriendbotHandler) Handle(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	hal.Render(w, result)
+	hal.Render(w, *result)
 }
 
 // doHandle is just a convenience method that returns the object to be rendered
-func (handler *FriendbotHandler) doHandle(r *http.Request) (interface{}, error) {
+func (handler *FriendbotHandler) doHandle(r *http.Request) (*client.TransactionSuccess, error) {
 	err := handler.checkEnabled()
 	if err != nil {
 		return nil, err
@@ -40,7 +41,7 @@ func (handler *FriendbotHandler) doHandle(r *http.Request) (interface{}, error) 
 
 	address, err := handler.loadAddress(r)
 	if err != nil {
-		return nil, err
+		return nil, problem.MakeInvalidFieldProblem("addr", err)
 	}
 
 	return handler.loadResult(address)
@@ -61,10 +62,33 @@ func (handler *FriendbotHandler) checkEnabled() error {
 
 func (handler *FriendbotHandler) loadAddress(r *http.Request) (string, error) {
 	address := r.Form.Get("addr")
-	_, err := strkey.Decode(strkey.VersionByteAccountID, address)
-	return address, err
+	unescaped, err := url.QueryUnescape(address)
+	if err != nil {
+		return unescaped, err
+	}
+
+	_, err = strkey.Decode(strkey.VersionByteAccountID, unescaped)
+	return unescaped, err
 }
 
-func (handler *FriendbotHandler) loadResult(address string) (client.TransactionSuccess, error) {
-	return handler.Friendbot.Pay(address)
+func (handler *FriendbotHandler) loadResult(address string) (*client.TransactionSuccess, error) {
+	result, signed, err := handler.Friendbot.Pay(address)
+	if result != nil && err != nil {
+		return result, makeTransactionFailedProblem(result.Result, signed, err)
+	}
+	return result, err
+}
+
+func makeTransactionFailedProblem(resultXDR string, envelopeXDR string, err error) error {
+	return &problem.P{
+		Type:   "transaction_failed",
+		Title:  "Transaction Failed",
+		Status: http.StatusBadRequest,
+		Detail: "The transaction failed when submitted to the stellar network. ",
+		Extras: map[string]interface{}{
+			"envelope_xdr": envelopeXDR,
+			"result_xdr":   resultXDR,
+			// we don't have access to the result_codes here
+		},
+	}
 }

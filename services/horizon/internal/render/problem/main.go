@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/stellar/go/services/horizon/internal/context/requestid"
-	"golang.org/x/net/context"
 	sProblem "github.com/stellar/go/support/render/problem"
+	"golang.org/x/net/context"
 )
 
 // Inflate expands a problem with contextal information, including setting basic info.
@@ -17,17 +17,6 @@ func Inflate(ctx context.Context, p *sProblem.P) {
 
 // Well-known and reused problems below:
 var (
-	// NotFound is a well-known problem type.  Use it as a shortcut
-	// in your actions.
-	NotFound = sProblem.P{
-		Type:   "not_found",
-		Title:  "Resource Missing",
-		Status: http.StatusNotFound,
-		Detail: "The resource at the url requested was not found.  This is usually " +
-			"occurs for one of two reasons:  The url requested is not valid, or no " +
-			"data in our database could be found with the parameters provided.",
-	}
-
 	// RateLimitExceeded is a well-known problem type.  Use it as a shortcut
 	// in your actions.
 	RateLimitExceeded = sProblem.P{
@@ -58,15 +47,6 @@ var (
 		Title: "An acceptable response content-type could not be provided for " +
 			"this request",
 		Status: http.StatusNotAcceptable,
-	}
-
-	// BadRequest is a well-known problem type.  Use it as a shortcut
-	// in your actions.
-	BadRequest = sProblem.P{
-		Type:   "bad_request",
-		Title:  "Bad Request",
-		Status: http.StatusBadRequest,
-		Detail: "The request you sent was invalid in some way",
 	}
 
 	// ServerOverCapacity is a well-known problem type.  Use it as a shortcut

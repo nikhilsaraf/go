@@ -22,16 +22,16 @@ type Bot struct {
 }
 
 // Pay funds the account at `destAddress`
-func (bot *Bot) Pay(destAddress string) (client.TransactionSuccess, error) {
+func (bot *Bot) Pay(destAddress string) (*client.TransactionSuccess, string, error) {
 	err := bot.checkSequenceRefresh()
 	if err != nil {
-		return client.TransactionSuccess{}, err
+		return nil, "", err
 	}
 
 	// var envelope string
 	signed, err := bot.makeTx(destAddress)
 	if err != nil {
-		return client.TransactionSuccess{}, err
+		return nil, "", err
 	}
 
 	result, err := bot.Client.SubmitTransaction(signed)
@@ -41,7 +41,7 @@ func (bot *Bot) Pay(destAddress string) (client.TransactionSuccess, error) {
 		defer bot.lock.Unlock()
 		bot.refreshSequence()
 	}
-	return result, err
+	return &result, signed, err
 }
 
 // establish initial sequence if needed

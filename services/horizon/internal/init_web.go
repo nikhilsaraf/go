@@ -39,11 +39,11 @@ func initWeb(app *App) {
 	}
 
 	// register problems
-	sProblem.RegisterError(sql.ErrNoRows, problem.NotFound)
+	sProblem.RegisterError(sql.ErrNoRows, sProblem.NotFound)
 	sProblem.RegisterError(sequence.ErrNoMoreRoom, problem.ServerOverCapacity)
-	sProblem.RegisterError(db2.ErrInvalidCursor, problem.BadRequest)
-	sProblem.RegisterError(db2.ErrInvalidLimit, problem.BadRequest)
-	sProblem.RegisterError(db2.ErrInvalidOrder, problem.BadRequest)
+	sProblem.RegisterError(db2.ErrInvalidCursor, sProblem.BadRequest)
+	sProblem.RegisterError(db2.ErrInvalidLimit, sProblem.BadRequest)
+	sProblem.RegisterError(db2.ErrInvalidOrder, sProblem.BadRequest)
 }
 
 // initWebMiddleware installs the middleware stack used for horizon onto the

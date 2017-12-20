@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"net/http"
 	"os"
 	"runtime"
@@ -13,6 +14,7 @@ import (
 	"github.com/stellar/go/support/config"
 	"github.com/stellar/go/support/http/server"
 	"github.com/stellar/go/support/log"
+	"github.com/stellar/go/support/render/problem"
 )
 
 // Config represents the configuration of a friendbot server
@@ -58,6 +60,7 @@ func run(cmd *cobra.Command, args []string) {
 
 	fb := initFriendbot(cfg.FriendbotSecret, cfg.NetworkPassphrase, cfg.HorizonURL, cfg.StartingBalance)
 	router := initRouter(fb)
+	registerProblems()
 
 	server.Serve(router, cfg.Port, cfg.TLS)
 }
@@ -79,6 +82,14 @@ func initRouter(fb *internal.Bot) *chi.Mux {
 	handler := &internal.FriendbotHandler{Friendbot: fb}
 	routerConfig.Route(http.MethodGet, "/", http.HandlerFunc(handler.Handle))
 	routerConfig.Route(http.MethodPost, "/", http.HandlerFunc(handler.Handle))
+	// not found handler
+	routerConfig.NotFound(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		problem.Render(log.DefaultLogger, w, problem.NotFound)
+	}))
 
 	return server.NewRouter(routerConfig)
+}
+
+func registerProblems() {
+	problem.RegisterError(sql.ErrNoRows, problem.NotFound)
 }
