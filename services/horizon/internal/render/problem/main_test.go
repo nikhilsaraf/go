@@ -22,7 +22,7 @@ func TestProblemPackage(t *testing.T) {
 
 	Convey("Common Problems", t, func() {
 		Convey("NotFound", func() {
-			w := testRender(ctx, NotFound)
+			w := testRender(ctx, sProblem.NotFound)
 			So(w.Code, ShouldEqual, 404)
 			t.Log(w.Body.String())
 		})

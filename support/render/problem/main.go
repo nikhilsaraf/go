@@ -20,7 +20,7 @@ type P struct {
 	Extras   map[string]interface{} `json:"extras,omitempty"`
 }
 
-func (p *P) Error() string {
+func (p P) Error() string {
 	return fmt.Sprintf("problem: %s", p.Type)
 }
 

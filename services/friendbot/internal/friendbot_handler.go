@@ -72,23 +72,12 @@ func (handler *FriendbotHandler) loadAddress(r *http.Request) (string, error) {
 }
 
 func (handler *FriendbotHandler) loadResult(address string) (*client.TransactionSuccess, error) {
-	result, signed, err := handler.Friendbot.Pay(address)
-	if result != nil && err != nil {
-		return result, makeTransactionFailedProblem(result.Result, signed, err)
+	result, err := handler.Friendbot.Pay(address)
+	switch e := err.(type) {
+	case client.Error:
+		return result, e.Problem.ToProblem()
+	case *client.Error:
+		return result, e.Problem.ToProblem()
 	}
 	return result, err
-}
-
-func makeTransactionFailedProblem(resultXDR string, envelopeXDR string, err error) error {
-	return &problem.P{
-		Type:   "transaction_failed",
-		Title:  "Transaction Failed",
-		Status: http.StatusBadRequest,
-		Detail: "The transaction failed when submitted to the stellar network. ",
-		Extras: map[string]interface{}{
-			"envelope_xdr": envelopeXDR,
-			"result_xdr":   resultXDR,
-			// we don't have access to the result_codes here
-		},
-	}
 }

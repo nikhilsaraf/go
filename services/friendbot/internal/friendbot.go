@@ -2,7 +2,6 @@ package internal
 
 import (
 	"strconv"
-	"strings"
 	"sync"
 
 	b "github.com/stellar/go/build"
@@ -22,26 +21,39 @@ type Bot struct {
 }
 
 // Pay funds the account at `destAddress`
-func (bot *Bot) Pay(destAddress string) (*client.TransactionSuccess, string, error) {
+func (bot *Bot) Pay(destAddress string) (*client.TransactionSuccess, error) {
 	err := bot.checkSequenceRefresh()
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
 
 	// var envelope string
 	signed, err := bot.makeTx(destAddress)
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
 
 	result, err := bot.Client.SubmitTransaction(signed)
-	if err != nil && strings.Contains(err.Error(), "tx_bad_seq") {
-		// force refresh sequence for bad sequence errors
-		bot.lock.Lock()
-		defer bot.lock.Unlock()
-		bot.refreshSequence()
+	if err != nil {
+		switch e := err.(type) {
+		case client.Error:
+			bot.checkHandleBadSequence(&e)
+		case *client.Error:
+			bot.checkHandleBadSequence(e)
+		}
 	}
-	return &result, signed, err
+	return &result, err
+}
+
+func (bot *Bot) checkHandleBadSequence(err *client.Error) {
+	if err.Problem.Type != "tx_bad_seq" {
+		return
+	}
+
+	// force refresh sequence for bad sequence errors
+	bot.lock.Lock()
+	defer bot.lock.Unlock()
+	bot.refreshSequence()
 }
 
 // establish initial sequence if needed
@@ -89,15 +101,17 @@ func (bot *Bot) makeTx(destAddress string) (string, error) {
 	return base64, err
 }
 
-// refreshes the sequence from the bot account and increments by 1
+// refreshes the sequence from the bot account
 func (bot *Bot) refreshSequence() error {
 	botAccount, err := bot.Client.LoadAccount(bot.address())
 	if err != nil {
+		bot.sequence = 0
 		return err
 	}
 
 	seq, err := strconv.ParseInt(botAccount.Sequence, 10, 0)
 	if err != nil {
+		bot.sequence = 0
 		return err
 	}
 
