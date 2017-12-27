@@ -4,11 +4,6 @@ import (
 	"net/http"
 )
 
-var supportedMethods = []string{
-	http.MethodGet,
-	http.MethodPost,
-}
-
 type route struct {
 	path    string
 	handler http.HandlerFunc

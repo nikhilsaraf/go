@@ -36,8 +36,6 @@ func (bot *Bot) Pay(destAddress string) (*client.TransactionSuccess, error) {
 	result, err := bot.Client.SubmitTransaction(signed)
 	if err != nil {
 		switch e := err.(type) {
-		case client.Error:
-			bot.checkHandleBadSequence(&e)
 		case *client.Error:
 			bot.checkHandleBadSequence(e)
 		}

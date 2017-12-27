@@ -8,13 +8,8 @@ import (
 
 // EmptyConfig gives you a new empty Config
 func EmptyConfig() *Config {
-	router := make(map[string][]route)
-	for _, method := range supportedMethods {
-		router[method] = []route{}
-	}
-
 	return &Config{
-		router:      router,
+		router:      make(map[string][]route),
 		middlewares: []func(http.Handler) http.Handler{},
 	}
 }
