@@ -46,7 +46,7 @@ func TestRender(t *testing.T) {
 
 	for _, kase := range testCases {
 		t.Run(kase.name, func(t *testing.T) {
-			w := testRender(nil, kase.p)
+			w := testRender(context.Background(), kase.p)
 			for _, wantItem := range kase.wantList {
 				assert.True(t, strings.Contains(w.Body.String(), wantItem), w.Body.String())
 				assert.Equal(t, kase.wantCode, w.Code)
@@ -71,7 +71,7 @@ func TestPanic(t *testing.T) {
 			r := recover()
 			assert.NotNil(t, r)
 		}()
-		testRender(nil, kase.p)
+		testRender(context.Background(), kase.p)
 	}
 }
 

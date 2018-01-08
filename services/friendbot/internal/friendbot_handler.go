@@ -19,7 +19,7 @@ type FriendbotHandler struct {
 func (handler *FriendbotHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	result, err := handler.doHandle(r)
 	if err != nil {
-		problem.Render(nil, w, err)
+		problem.Render(r.Context(), w, err)
 		return
 	}
 

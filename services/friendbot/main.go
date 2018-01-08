@@ -84,7 +84,7 @@ func initRouter(fb *internal.Bot) *chi.Mux {
 	routerConfig.Route(http.MethodPost, "/", http.HandlerFunc(handler.Handle))
 	// not found handler
 	routerConfig.NotFound(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		problem.Render(nil, w, problem.NotFound)
+		problem.Render(r.Context(), w, problem.NotFound)
 	}))
 
 	return server.NewRouter(routerConfig)
