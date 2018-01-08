@@ -8,7 +8,6 @@ import (
 	"github.com/stellar/go/services/horizon/internal/render"
 	hProblem "github.com/stellar/go/services/horizon/internal/render/problem"
 	"github.com/stellar/go/services/horizon/internal/render/sse"
-	"github.com/stellar/go/support/log"
 	"github.com/stellar/go/support/render/problem"
 	"github.com/zenazn/goji/web"
 	"golang.org/x/net/context"
@@ -54,7 +53,7 @@ func (base *Base) Execute(action interface{}) {
 		action.JSON()
 
 		if base.Err != nil {
-			problem.Render(log.Ctx(base.Ctx), base.W, base.Err)
+			problem.Render(base.Ctx, base.W, base.Err)
 			return
 		}
 
@@ -74,7 +73,7 @@ func (base *Base) Execute(action interface{}) {
 				// havent sent the preamble, meaning we should simply return the normal
 				// error.
 				if stream.SentCount() == 0 {
-					problem.Render(log.Ctx(base.Ctx), base.W, base.Err)
+					problem.Render(base.Ctx, base.W, base.Err)
 					return
 				}
 
@@ -102,7 +101,7 @@ func (base *Base) Execute(action interface{}) {
 		action.Raw()
 
 		if base.Err != nil {
-			problem.Render(log.Ctx(base.Ctx), base.W, base.Err)
+			problem.Render(base.Ctx, base.W, base.Err)
 			return
 		}
 	default:
@@ -111,7 +110,7 @@ func (base *Base) Execute(action interface{}) {
 	return
 
 NotAcceptable:
-	problem.Render(log.Ctx(base.Ctx), base.W, hProblem.NotAcceptable)
+	problem.Render(base.Ctx, base.W, hProblem.NotAcceptable)
 	return
 }
 

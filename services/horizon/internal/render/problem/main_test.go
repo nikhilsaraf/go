@@ -6,7 +6,6 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stellar/go/services/horizon/internal/context/requestid"
-	"github.com/stellar/go/support/log"
 	"github.com/stellar/go/support/render/problem"
 	"golang.org/x/net/context"
 )
@@ -16,7 +15,7 @@ func TestProblemPackage(t *testing.T) {
 
 	testRender := func(ctx context.Context, p interface{}) *httptest.ResponseRecorder {
 		w := httptest.NewRecorder()
-		problem.Render(log.Ctx(ctx), w, p)
+		problem.Render(ctx, w, p)
 		return w
 	}
 

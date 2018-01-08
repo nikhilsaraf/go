@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-errors/errors"
 	"github.com/stellar/go/support/log"
+	"golang.org/x/net/context"
 )
 
 // P is a struct that represents an error response to be rendered to a connected
@@ -62,22 +63,22 @@ type HasProblem interface {
 // `p` is the problem, which may be either a concrete P struct, an implementor
 // of the `HasProblem` interface, or an error.  Any other value for `p` will
 // panic.
-func Render(logger *log.Entry, w http.ResponseWriter, p interface{}) {
+func Render(ctx context.Context, w http.ResponseWriter, p interface{}) {
 	switch p := p.(type) {
 	case P:
-		render(logger, w, p)
+		render(ctx, w, p)
 	case *P:
-		render(logger, w, *p)
+		render(ctx, w, *p)
 	case HasProblem:
-		render(logger, w, p.Problem())
+		render(ctx, w, p.Problem())
 	case error:
-		renderErr(logger, w, p)
+		renderErr(ctx, w, p)
 	default:
 		panic(fmt.Sprintf("Invalid problem: %v+", p))
 	}
 }
 
-func render(logger *log.Entry, w http.ResponseWriter, p P) {
+func render(ctx context.Context, w http.ResponseWriter, p P) {
 	Inflate(&p)
 
 	w.Header().Set("Content-Type", "application/problem+json; charset=utf-8")
@@ -85,7 +86,7 @@ func render(logger *log.Entry, w http.ResponseWriter, p P) {
 
 	if err != nil {
 		err := errors.Wrap(err, 1)
-		logger.WithStack(err).Error(err)
+		log.Ctx(ctx).WithStack(err).Error(err)
 		http.Error(w, "error rendering problem", http.StatusInternalServerError)
 		return
 	}
@@ -94,7 +95,7 @@ func render(logger *log.Entry, w http.ResponseWriter, p P) {
 	w.Write(js)
 }
 
-func renderErr(logger *log.Entry, w http.ResponseWriter, err error) {
+func renderErr(ctx context.Context, w http.ResponseWriter, err error) {
 	origErr := err
 
 	if err, ok := err.(*errors.Error); ok {
@@ -106,11 +107,11 @@ func renderErr(logger *log.Entry, w http.ResponseWriter, err error) {
 	// If this error is not a registered error
 	// log it and replace it with a 500 error
 	if !ok {
-		logger.WithStack(err).Error(err)
+		log.Ctx(ctx).WithStack(err).Error(err)
 		p = ServerError
 	}
 
-	render(logger, w, p)
+	render(ctx, w, p)
 }
 
 // ServerError is a well-known problem type. Use it as a shortcut.

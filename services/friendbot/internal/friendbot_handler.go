@@ -6,7 +6,6 @@ import (
 
 	"github.com/stellar/go/clients/horizon"
 	"github.com/stellar/go/strkey"
-	"github.com/stellar/go/support/log"
 	"github.com/stellar/go/support/render/hal"
 	"github.com/stellar/go/support/render/problem"
 )
@@ -20,7 +19,7 @@ type FriendbotHandler struct {
 func (handler *FriendbotHandler) Handle(w http.ResponseWriter, r *http.Request) {
 	result, err := handler.doHandle(r)
 	if err != nil {
-		problem.Render(log.DefaultLogger, w, err)
+		problem.Render(nil, w, err)
 		return
 	}
 

@@ -1,7 +1,6 @@
 package horizon
 
 import (
-	"github.com/stellar/go/support/log"
 	"github.com/stellar/go/support/render/problem"
 )
 
@@ -12,5 +11,5 @@ type NotFoundAction struct {
 
 // JSON is a method for actions.JSON
 func (action *NotFoundAction) JSON() {
-	problem.Render(log.Ctx(action.Ctx), action.W, problem.NotFound)
+	problem.Render(action.Ctx, action.W, problem.NotFound)
 }

@@ -1,18 +1,16 @@
 package problem
 
 import (
+	"errors"
 	"fmt"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
-	"errors"
-
 	ge "github.com/go-errors/errors"
-	"github.com/stretchr/testify/assert"
-
-	"github.com/stellar/go/support/log"
 	"github.com/stellar/go/support/test"
+	"github.com/stretchr/testify/assert"
+	"golang.org/x/net/context"
 )
 
 // TestRender tests the render cases
@@ -48,7 +46,7 @@ func TestRender(t *testing.T) {
 
 	for _, kase := range testCases {
 		t.Run(kase.name, func(t *testing.T) {
-			w := testRender(log.DefaultLogger, kase.p)
+			w := testRender(nil, kase.p)
 			for _, wantItem := range kase.wantList {
 				assert.True(t, strings.Contains(w.Body.String(), wantItem), w.Body.String())
 				assert.Equal(t, kase.wantCode, w.Code)
@@ -73,7 +71,7 @@ func TestPanic(t *testing.T) {
 			r := recover()
 			assert.NotNil(t, r)
 		}()
-		testRender(log.DefaultLogger, kase.p)
+		testRender(nil, kase.p)
 	}
 }
 
@@ -99,7 +97,7 @@ func TestServerErrorConversion(t *testing.T) {
 	for _, kase := range testCases {
 		t.Run(kase.name, func(t *testing.T) {
 			ctx, buf := test.ContextWithLogBuffer()
-			w := testRender(log.Ctx(ctx), kase.err)
+			w := testRender(ctx, kase.err)
 			logged := buf.String()
 
 			assert.True(t, strings.Contains(w.Body.String(), "server_error"), w.Body.String())
@@ -118,8 +116,8 @@ func TestServerErrorConversion(t *testing.T) {
 	}
 }
 
-func testRender(logger *log.Entry, p interface{}) *httptest.ResponseRecorder {
+func testRender(ctx context.Context, p interface{}) *httptest.ResponseRecorder {
 	w := httptest.NewRecorder()
-	Render(logger, w, p)
+	Render(ctx, w, p)
 	return w
 }
