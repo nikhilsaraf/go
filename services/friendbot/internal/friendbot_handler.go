@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"net/url"
 
-	client "github.com/stellar/go/clients/horizon"
+	"github.com/stellar/go/clients/horizon"
 	"github.com/stellar/go/strkey"
 	"github.com/stellar/go/support/log"
 	"github.com/stellar/go/support/render/hal"
@@ -28,7 +28,7 @@ func (handler *FriendbotHandler) Handle(w http.ResponseWriter, r *http.Request) 
 }
 
 // doHandle is just a convenience method that returns the object to be rendered
-func (handler *FriendbotHandler) doHandle(r *http.Request) (*client.TransactionSuccess, error) {
+func (handler *FriendbotHandler) doHandle(r *http.Request) (*horizon.TransactionSuccess, error) {
 	err := handler.checkEnabled()
 	if err != nil {
 		return nil, err
@@ -71,12 +71,12 @@ func (handler *FriendbotHandler) loadAddress(r *http.Request) (string, error) {
 	return unescaped, err
 }
 
-func (handler *FriendbotHandler) loadResult(address string) (*client.TransactionSuccess, error) {
+func (handler *FriendbotHandler) loadResult(address string) (*horizon.TransactionSuccess, error) {
 	result, err := handler.Friendbot.Pay(address)
 	switch e := err.(type) {
-	case client.Error:
+	case horizon.Error:
 		return result, e.Problem.ToProblem()
-	case *client.Error:
+	case *horizon.Error:
 		return result, e.Problem.ToProblem()
 	}
 	return result, err

@@ -5,13 +5,13 @@ import (
 	"sync"
 
 	b "github.com/stellar/go/build"
-	client "github.com/stellar/go/clients/horizon"
+	"github.com/stellar/go/clients/horizon"
 	"github.com/stellar/go/keypair"
 )
 
 // Bot represents the friendbot subsystem.
 type Bot struct {
-	Client          *client.Client
+	Horizon         *horizon.Client
 	Secret          string
 	Network         string
 	StartingBalance string
@@ -21,29 +21,28 @@ type Bot struct {
 }
 
 // Pay funds the account at `destAddress`
-func (bot *Bot) Pay(destAddress string) (*client.TransactionSuccess, error) {
+func (bot *Bot) Pay(destAddress string) (*horizon.TransactionSuccess, error) {
 	err := bot.checkSequenceRefresh()
 	if err != nil {
 		return nil, err
 	}
 
-	// var envelope string
 	signed, err := bot.makeTx(destAddress)
 	if err != nil {
 		return nil, err
 	}
 
-	result, err := bot.Client.SubmitTransaction(signed)
+	result, err := bot.Horizon.SubmitTransaction(signed)
 	if err != nil {
 		switch e := err.(type) {
-		case *client.Error:
+		case *horizon.Error:
 			bot.checkHandleBadSequence(e)
 		}
 	}
 	return &result, err
 }
 
-func (bot *Bot) checkHandleBadSequence(err *client.Error) {
+func (bot *Bot) checkHandleBadSequence(err *horizon.Error) {
 	if err.Problem.Type != "tx_bad_seq" {
 		return
 	}
@@ -101,7 +100,7 @@ func (bot *Bot) makeTx(destAddress string) (string, error) {
 
 // refreshes the sequence from the bot account
 func (bot *Bot) refreshSequence() error {
-	botAccount, err := bot.Client.LoadAccount(bot.address())
+	botAccount, err := bot.Horizon.LoadAccount(bot.address())
 	if err != nil {
 		bot.sequence = 0
 		return err

@@ -18,7 +18,7 @@ func initFriendbot(friendbotSecret string, networkPassphrase string, horizonURL 
 
 	return &internal.Bot{
 		Secret: friendbotSecret,
-		Client: &horizon.Client{
+		Horizon: &horizon.Client{
 			URL:  horizonURL,
 			HTTP: http.DefaultClient,
 		},
