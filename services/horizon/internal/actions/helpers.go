@@ -9,11 +9,11 @@ import (
 	"github.com/stellar/go/services/horizon/internal/assets"
 	"github.com/stellar/go/services/horizon/internal/db2"
 	"github.com/stellar/go/services/horizon/internal/ledger"
-	"github.com/stellar/go/services/horizon/internal/render/problem"
+	hProblem "github.com/stellar/go/services/horizon/internal/render/problem"
 	"github.com/stellar/go/services/horizon/internal/toid"
 	"github.com/stellar/go/strkey"
 	"github.com/stellar/go/support/errors"
-	sProblem "github.com/stellar/go/support/render/problem"
+	"github.com/stellar/go/support/render/problem"
 	"github.com/stellar/go/support/time"
 	"github.com/stellar/go/xdr"
 )
@@ -343,7 +343,7 @@ func (base *Base) GetTimeMillis(name string) (timeMillis time.Millis) {
 // SetInvalidField establishes an error response triggered by an invalid
 // input field from the user.
 func (base *Base) SetInvalidField(name string, reason error) {
-	base.Err = sProblem.MakeInvalidFieldProblem(name, reason)
+	base.Err = problem.MakeInvalidFieldProblem(name, reason)
 }
 
 // Path returns the current action's path, as determined by the http.Request of
@@ -374,6 +374,6 @@ func (base *Base) ValidateBodyType() {
 	case mt == "multipart/form-data":
 		return
 	default:
-		base.Err = &problem.UnsupportedMediaType
+		base.Err = &hProblem.UnsupportedMediaType
 	}
 }

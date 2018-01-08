@@ -7,7 +7,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stellar/go/services/horizon/internal/context/requestid"
 	"github.com/stellar/go/support/log"
-	sProblem "github.com/stellar/go/support/render/problem"
+	"github.com/stellar/go/support/render/problem"
 	"golang.org/x/net/context"
 )
 
@@ -16,13 +16,13 @@ func TestProblemPackage(t *testing.T) {
 
 	testRender := func(ctx context.Context, p interface{}) *httptest.ResponseRecorder {
 		w := httptest.NewRecorder()
-		sProblem.Render(log.Ctx(ctx), w, p)
+		problem.Render(log.Ctx(ctx), w, p)
 		return w
 	}
 
 	Convey("Common Problems", t, func() {
 		Convey("NotFound", func() {
-			w := testRender(ctx, sProblem.NotFound)
+			w := testRender(ctx, problem.NotFound)
 			So(w.Code, ShouldEqual, 404)
 			t.Log(w.Body.String())
 		})
@@ -37,7 +37,7 @@ func TestProblemPackage(t *testing.T) {
 	Convey("problem.Inflate", t, func() {
 		Convey("sets Instance to the request id based upon the context", func() {
 			ctx2 := requestid.Context(ctx, "2")
-			p := sProblem.P{}
+			p := problem.P{}
 			Inflate(ctx2, &p)
 
 			So(p.Instance, ShouldEqual, "2")

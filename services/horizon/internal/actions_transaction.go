@@ -6,12 +6,12 @@ import (
 	"github.com/stellar/go/services/horizon/internal/db2"
 	"github.com/stellar/go/services/horizon/internal/db2/history"
 	"github.com/stellar/go/services/horizon/internal/render/hal"
-	"github.com/stellar/go/services/horizon/internal/render/problem"
+	hProblem "github.com/stellar/go/services/horizon/internal/render/problem"
 	"github.com/stellar/go/services/horizon/internal/render/sse"
 	"github.com/stellar/go/services/horizon/internal/resource"
 	"github.com/stellar/go/services/horizon/internal/txsub"
 	halRender "github.com/stellar/go/support/render/hal"
-	sProblem "github.com/stellar/go/support/render/problem"
+	"github.com/stellar/go/support/render/problem"
 )
 
 // This file contains the actions:
@@ -165,7 +165,7 @@ func (action *TransactionCreateAction) loadResult() {
 	case result := <-submission:
 		action.Result = result
 	case <-action.Ctx.Done():
-		action.Err = &problem.Timeout
+		action.Err = &hProblem.Timeout
 	}
 }
 
@@ -176,12 +176,12 @@ func (action *TransactionCreateAction) loadResource() {
 	}
 
 	if action.Result.Err == txsub.ErrTimeout {
-		action.Err = &problem.Timeout
+		action.Err = &hProblem.Timeout
 		return
 	}
 
 	if action.Result.Err == txsub.ErrCanceled {
-		action.Err = &problem.Timeout
+		action.Err = &hProblem.Timeout
 		return
 	}
 
@@ -190,7 +190,7 @@ func (action *TransactionCreateAction) loadResource() {
 		rcr := resource.TransactionResultCodes{}
 		rcr.Populate(action.Ctx, err)
 
-		action.Err = &sProblem.P{
+		action.Err = &problem.P{
 			Type:   "transaction_failed",
 			Title:  "Transaction Failed",
 			Status: http.StatusBadRequest,
@@ -205,7 +205,7 @@ func (action *TransactionCreateAction) loadResource() {
 			},
 		}
 	case *txsub.MalformedTransactionError:
-		action.Err = &sProblem.P{
+		action.Err = &problem.P{
 			Type:   "transaction_malformed",
 			Title:  "Transaction Malformed",
 			Status: http.StatusBadRequest,

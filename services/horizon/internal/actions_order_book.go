@@ -7,7 +7,7 @@ import (
 	"github.com/stellar/go/services/horizon/internal/render/sse"
 	"github.com/stellar/go/services/horizon/internal/resource"
 	"github.com/stellar/go/support/render/hal"
-	sProblem "github.com/stellar/go/support/render/problem"
+	"github.com/stellar/go/support/render/problem"
 	"github.com/stellar/go/xdr"
 )
 
@@ -28,7 +28,7 @@ func (action *OrderBookShowAction) LoadQuery() {
 	action.Limit = action.GetLimit("limit", 20, 200)
 
 	if action.Err != nil {
-		action.Err = &sProblem.P{
+		action.Err = &problem.P{
 			Type:   "invalid_order_book",
 			Title:  "Invalid Order Book Parameters",
 			Status: http.StatusBadRequest,

@@ -4,14 +4,14 @@ import (
 	"net/http"
 
 	"github.com/stellar/go/services/horizon/internal/context/requestid"
-	sProblem "github.com/stellar/go/support/render/problem"
+	"github.com/stellar/go/support/render/problem"
 	"golang.org/x/net/context"
 )
 
 // Inflate expands a problem with contextal information, including setting basic info.
 // At present it adds the request's id as the problem's Instance, if available.
-func Inflate(ctx context.Context, p *sProblem.P) {
-	sProblem.Inflate(p)
+func Inflate(ctx context.Context, p *problem.P) {
+	problem.Inflate(p)
 	p.Instance = requestid.FromContext(ctx)
 }
 
@@ -19,7 +19,7 @@ func Inflate(ctx context.Context, p *sProblem.P) {
 var (
 	// RateLimitExceeded is a well-known problem type.  Use it as a shortcut
 	// in your actions.
-	RateLimitExceeded = sProblem.P{
+	RateLimitExceeded = problem.P{
 		Type:   "rate_limit_exceeded",
 		Title:  "Rate limit exceeded",
 		Status: 429,
@@ -31,7 +31,7 @@ var (
 
 	// NotImplemented is a well-known problem type.  Use it as a shortcut
 	// in your actions.
-	NotImplemented = sProblem.P{
+	NotImplemented = problem.P{
 		Type:   "not_implemented",
 		Title:  "Resource Not Yet Implemented",
 		Status: http.StatusNotFound,
@@ -42,7 +42,7 @@ var (
 
 	// NotAcceptable is a well-known problem type.  Use it as a shortcut
 	// in your actions.
-	NotAcceptable = sProblem.P{
+	NotAcceptable = problem.P{
 		Type: "not_acceptable",
 		Title: "An acceptable response content-type could not be provided for " +
 			"this request",
@@ -51,7 +51,7 @@ var (
 
 	// ServerOverCapacity is a well-known problem type.  Use it as a shortcut
 	// in your actions.
-	ServerOverCapacity = sProblem.P{
+	ServerOverCapacity = problem.P{
 		Type:   "server_over_capacity",
 		Title:  "Server Over Capacity",
 		Status: http.StatusServiceUnavailable,
@@ -61,7 +61,7 @@ var (
 
 	// Timeout is a well-known problem type.  Use it as a shortcut
 	// in your actions.
-	Timeout = sProblem.P{
+	Timeout = problem.P{
 		Type:   "timeout",
 		Title:  "Timeout",
 		Status: http.StatusGatewayTimeout,
@@ -71,7 +71,7 @@ var (
 
 	// UnsupportedMediaType is a well-known problem type.  Use it as a shortcut
 	// in your actions.
-	UnsupportedMediaType = sProblem.P{
+	UnsupportedMediaType = problem.P{
 		Type:   "unsupported_media_type",
 		Title:  "Unsupported Media Type",
 		Status: http.StatusUnsupportedMediaType,
@@ -81,7 +81,7 @@ var (
 
 	// BeforeHistory is a well-known problem type.  Use it as a shortcut
 	// in your actions.
-	BeforeHistory = sProblem.P{
+	BeforeHistory = problem.P{
 		Type:   "before_history",
 		Title:  "Data Requested Is Before Recorded History",
 		Status: http.StatusGone,
@@ -93,7 +93,7 @@ var (
 
 	// StaleHistory is a well-known problem type.  Use it as a shortcut
 	// in your actions.
-	StaleHistory = sProblem.P{
+	StaleHistory = problem.P{
 		Type:   "stale_history",
 		Title:  "Historical DB Is Too Stale",
 		Status: http.StatusServiceUnavailable,

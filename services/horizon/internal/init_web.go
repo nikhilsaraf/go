@@ -11,9 +11,9 @@ import (
 	"github.com/rs/cors"
 	"github.com/sebest/xff"
 	"github.com/stellar/go/services/horizon/internal/db2"
-	"github.com/stellar/go/services/horizon/internal/render/problem"
+	hProblem "github.com/stellar/go/services/horizon/internal/render/problem"
 	"github.com/stellar/go/services/horizon/internal/txsub/sequence"
-	sProblem "github.com/stellar/go/support/render/problem"
+	"github.com/stellar/go/support/render/problem"
 	"github.com/zenazn/goji/web"
 	"github.com/zenazn/goji/web/middleware"
 )
@@ -39,11 +39,11 @@ func initWeb(app *App) {
 	}
 
 	// register problems
-	sProblem.RegisterError(sql.ErrNoRows, sProblem.NotFound)
-	sProblem.RegisterError(sequence.ErrNoMoreRoom, problem.ServerOverCapacity)
-	sProblem.RegisterError(db2.ErrInvalidCursor, sProblem.BadRequest)
-	sProblem.RegisterError(db2.ErrInvalidLimit, sProblem.BadRequest)
-	sProblem.RegisterError(db2.ErrInvalidOrder, sProblem.BadRequest)
+	problem.RegisterError(sql.ErrNoRows, problem.NotFound)
+	problem.RegisterError(sequence.ErrNoMoreRoom, hProblem.ServerOverCapacity)
+	problem.RegisterError(db2.ErrInvalidCursor, problem.BadRequest)
+	problem.RegisterError(db2.ErrInvalidLimit, problem.BadRequest)
+	problem.RegisterError(db2.ErrInvalidOrder, problem.BadRequest)
 }
 
 // initWebMiddleware installs the middleware stack used for horizon onto the

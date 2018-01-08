@@ -6,7 +6,7 @@ import (
 	gctx "github.com/goji/context"
 	"github.com/stellar/go/services/horizon/internal/errors"
 	"github.com/stellar/go/support/log"
-	sProblem "github.com/stellar/go/support/render/problem"
+	"github.com/stellar/go/support/render/problem"
 	"github.com/zenazn/goji/web"
 )
 
@@ -21,7 +21,7 @@ func RecoverMiddleware(c *web.C, h http.Handler) http.Handler {
 			if rec := recover(); rec != nil {
 				err := errors.FromPanic(rec)
 				errors.ReportToSentry(err, r)
-				sProblem.Render(log.Ctx(ctx), w, err)
+				problem.Render(log.Ctx(ctx), w, err)
 			}
 		}()
 
