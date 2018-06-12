@@ -67,15 +67,14 @@ func (p *pathNode) Path() []xdr.Asset {
 	return path[1 : len(path)-1]
 }
 
+func (p *pathNode) init() {
+	p.costCache = make(map[xdr.Int64]xdr.Int64)
+}
+
 // Cost implements the paths.Path.Cost interface method
 func (p *pathNode) Cost(amount xdr.Int64) (xdr.Int64, error) {
 	if p.costCache == nil {
-		p.costCache = make(map[xdr.Int64]xdr.Int64)
-	}
-
-	if p.Tail == nil {
-		p.costCache[amount] = amount
-		return amount, nil
+		p.init()
 	}
 
 	result := amount
