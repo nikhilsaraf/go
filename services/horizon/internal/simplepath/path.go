@@ -12,9 +12,10 @@ import (
 // pathNode implements the paths.Path interface and represents a path
 // as a linked list pointing from source to destination.
 type pathNode struct {
-	Asset xdr.Asset
-	Tail  *pathNode
-	Q     *core.Q
+	Asset     xdr.Asset
+	Tail      *pathNode
+	Q         *core.Q
+	costCache map[xdr.Int64]xdr.Int64
 }
 
 // check interface compatibility
@@ -68,7 +69,12 @@ func (p *pathNode) Path() []xdr.Asset {
 
 // Cost implements the paths.Path.Cost interface method
 func (p *pathNode) Cost(amount xdr.Int64) (xdr.Int64, error) {
+	if p.costCache == nil {
+		p.costCache = make(map[xdr.Int64]xdr.Int64)
+	}
+
 	if p.Tail == nil {
+		p.costCache[amount] = amount
 		return amount, nil
 	}
 
@@ -83,7 +89,21 @@ func (p *pathNode) Cost(amount xdr.Int64) (xdr.Int64, error) {
 		}
 		cur = cur.Tail
 	}
+
+	p.costCache[amount] = result
 	return result, nil
+}
+
+// CachedCost impl, returns a cached version for the provided amount or nil if not cached
+func (p *pathNode) CachedCost(amount xdr.Int64) *xdr.Int64 {
+	if p.costCache == nil {
+		return nil
+	}
+
+	if cached, ok := p.costCache[amount]; ok {
+		return &cached
+	}
+	return nil
 }
 
 // Depth returns the length of the list
