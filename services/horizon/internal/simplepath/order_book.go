@@ -45,13 +45,14 @@ func (ob *orderBook) CostToConsumeLiquidity(sellingAmount xdr.Int64) (xdr.Int64,
 			return 0, e
 		}
 
-		if offerAmount >= remaining {
-			buyingAmount += convertToBuyingUnits(remaining, pricen, priced)
+		buyingUnitsExtracted, sellingUnitsExtracted := convertToBuyingUnits(offerAmount, remaining, pricen, priced)
+		buyingAmount += buyingUnitsExtracted
+		remaining -= sellingUnitsExtracted
+
+		// check if we got all the units we wanted
+		if remaining <= 0 {
 			return xdr.Int64(buyingAmount), nil
 		}
-
-		buyingAmount += convertToBuyingUnits(offerAmount, pricen, priced)
-		remaining -= offerAmount
 	}
 	return 0, ErrNotEnough
 }
@@ -89,7 +90,7 @@ func (ob *orderBook) query() (sq.SelectBuilder, error) {
 	return sql, nil
 }
 
-// convertToBuyingUnits uses special rounding logic to multiply the amount by the price
+// convertToBuyingUnits uses special rounding logic to multiply the amount by the price and returns (buyingUnits, sellingUnits) that can be taken from the offer
 /*
 	offerSellingBound = (offer.price.n > offer.price.d)
 		? offer.amount : ceil(floor(offer.amount * offer.price) / offer.price)
@@ -102,52 +103,65 @@ func (ob *orderBook) query() (sq.SelectBuilder, error) {
 	pathPaymentAmountBought = what we are consuming from offer
 	pathPaymentAmountSold = amount we are giving to the buyer
 	Sell units = pathPaymentAmountSold and buy units = pathPaymentAmountBought
+
+	this is how we do floor and ceiling in stellar-core:
+	https://github.com/stellar/stellar-core/blob/9af27ef4e20b66f38ab148d52ba7904e74fe502f/src/util/types.cpp#L201
 */
-func convertToBuyingUnits(sellingAmount int64, pricen int64, priced int64) int64 {
-	var a, n, d big.Int
-	var r big.Int // result
-
-	a.SetInt64(sellingAmount)
-	n.SetInt64(pricen)
-	d.SetInt64(priced)
-
+func convertToBuyingUnits(sellingOfferAmount int64, sellingUnitsNeeded int64, pricen int64, priced int64) (int64, int64) {
 	// offerSellingBound
-	r.SetInt64(sellingAmount)
+	result := sellingOfferAmount
 	if pricen <= priced {
-		mulFractionRoundDown(r, n, d)
-		mulFractionRoundUp(r, d, n)
+		result = mulFractionRoundDown(sellingOfferAmount, pricen, priced)
+		result = mulFractionRoundUp(result, priced, pricen)
 	}
 
 	// pathPaymentAmountBought
-	r = min(r, a)
+	result = min(result, sellingUnitsNeeded)
+	sellingUnitsExtracted := result
 
 	// pathPaymentAmountSold
-	mulFractionRoundUp(r, n, d)
+	result = mulFractionRoundUp(result, pricen, priced)
+
+	return result, sellingUnitsExtracted
+}
+
+// mulFractionRoundDown sets x = (x * n) / d, which is a round-down operation
+// see https://github.com/stellar/stellar-core/blob/9af27ef4e20b66f38ab148d52ba7904e74fe502f/src/util/types.cpp#L201
+func mulFractionRoundDown(x int64, n int64, d int64) int64 {
+	var bn, bd big.Int
+	bn.SetInt64(n)
+	bd.SetInt64(d)
+	var r big.Int
+
+	r.SetInt64(x)
+	r.Mul(&r, &bn)
+	r.Quo(&r, &bd)
 
 	return r.Int64()
 }
 
-// mulFractionRoundDown sets x = (x * n) / d, which is a round-down operation
-func mulFractionRoundDown(x big.Int, n big.Int, d big.Int) {
-	x.Mul(&x, &n)
-	x.Quo(&x, &d)
-}
-
 // mulFractionRoundUp sets x = ((x * n) + d - 1) / d, which is a round-up operation
-func mulFractionRoundUp(x big.Int, n big.Int, d big.Int) {
+// see https://github.com/stellar/stellar-core/blob/9af27ef4e20b66f38ab148d52ba7904e74fe502f/src/util/types.cpp#L201
+func mulFractionRoundUp(x int64, n int64, d int64) int64 {
+	var bn, bd big.Int
+	bn.SetInt64(n)
+	bd.SetInt64(d)
 	var one big.Int
 	one.SetInt64(1)
+	var r big.Int
 
-	x.Mul(&x, &n)
-	x.Add(&x, &d)
-	x.Sub(&x, &one)
-	x.Quo(&x, &d)
+	r.SetInt64(x)
+	r.Mul(&r, &bn)
+	r.Add(&r, &bd)
+	r.Sub(&r, &one)
+	r.Quo(&r, &bd)
+
+	return r.Int64()
 }
 
-// min impl
-func min(x big.Int, y big.Int) big.Int {
-	cmp := x.Cmp(&y)
-	if cmp <= 0 {
+// min impl for int64
+func min(x int64, y int64) int64 {
+	if x <= y {
 		return x
 	}
 	return y
