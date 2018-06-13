@@ -101,7 +101,10 @@ func TestConvertToBuyingUnits(t *testing.T) {
 	}
 	for _, kase := range testCases {
 		t.Run(t.Name(), func(t *testing.T) {
-			buyingUnits, sellingUnits := convertToBuyingUnits(kase.sellingOfferAmount, kase.sellingUnitsNeeded, kase.pricen, kase.priced)
+			buyingUnits, sellingUnits, e := convertToBuyingUnits(kase.sellingOfferAmount, kase.sellingUnitsNeeded, kase.pricen, kase.priced)
+			if !assert.Nil(t, e) {
+				return
+			}
 			assert.Equal(t, kase.wantBuyingUnits, buyingUnits)
 			assert.Equal(t, kase.wantSellingUnits, sellingUnits)
 		})
