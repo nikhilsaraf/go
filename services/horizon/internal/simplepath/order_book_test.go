@@ -3,6 +3,8 @@ package simplepath
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/stellar/go/services/horizon/internal/db2/core"
 	"github.com/stellar/go/services/horizon/internal/test"
 	"github.com/stellar/go/xdr"
@@ -72,5 +74,24 @@ func TestOrderBook_BadCost(t *testing.T) {
 	r, err := ob.CostToConsumeLiquidity(2000000000)
 	if tt.Assert.NoError(err) {
 		tt.Assert.Equal(xdr.Int64(10000000), r)
+	}
+}
+
+func TestConvertToBuyingUnits(t *testing.T) {
+	testCases := []struct {
+		sellingUnits    int64
+		pricen          int64
+		priced          int64
+		wantBuyingUnits int64
+	}{
+		{20, 1, 4, 5},
+		{20, 7, 11, 13},
+		{20, 11, 7, 32},
+	}
+	for _, kase := range testCases {
+		t.Run(t.Name(), func(t *testing.T) {
+			r := convertToBuyingUnits(kase.sellingUnits, kase.pricen, kase.priced)
+			assert.Equal(t, kase.wantBuyingUnits, r)
+		})
 	}
 }

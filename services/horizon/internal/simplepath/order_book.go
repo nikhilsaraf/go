@@ -46,11 +46,11 @@ func (ob *orderBook) CostToConsumeLiquidity(sellingAmount xdr.Int64) (xdr.Int64,
 		}
 
 		if offerAmount >= remaining {
-			buyingAmount += mul(remaining, pricen, priced)
+			buyingAmount += convertToBuyingUnits(remaining, pricen, priced)
 			return xdr.Int64(buyingAmount), nil
 		}
 
-		buyingAmount += mul(offerAmount, pricen, priced)
+		buyingAmount += convertToBuyingUnits(offerAmount, pricen, priced)
 		remaining -= offerAmount
 	}
 	return 0, ErrNotEnough
@@ -89,15 +89,66 @@ func (ob *orderBook) query() (sq.SelectBuilder, error) {
 	return sql, nil
 }
 
-// mul multiplies the input amount by the input price
-func mul(amount int64, pricen int64, priced int64) int64 {
-	var r, n, d big.Int
+// convertToBuyingUnits uses special rounding logic to multiply the amount by the price
+/*
+	offerSellingBound = (offer.price.n > offer.price.d)
+		? offer.amount : ceil(floor(offer.amount * offer.price) / offer.price)
+	pathPaymentAmountBought = min(offerSellingBound, pathPaymentBuyingBound)
+	pathPaymentAmountSold = ceil(pathPaymentAmountBought * offer.price)
 
-	r.SetInt64(amount)
+	offer.amount = amount selling
+	offerSellingBound = roundingCorrectedOffer
+	pathPaymentBuyingBound = needed
+	pathPaymentAmountBought = what we are consuming from offer
+	pathPaymentAmountSold = amount we are giving to the buyer
+	Sell units = pathPaymentAmountSold and buy units = pathPaymentAmountBought
+*/
+func convertToBuyingUnits(sellingAmount int64, pricen int64, priced int64) int64 {
+	var a, n, d big.Int
+	var r big.Int // result
+
+	a.SetInt64(sellingAmount)
 	n.SetInt64(pricen)
 	d.SetInt64(priced)
 
-	r.Mul(&r, &n)
-	r.Quo(&r, &d)
+	// offerSellingBound
+	r.SetInt64(sellingAmount)
+	if pricen <= priced {
+		mulFractionRoundDown(r, n, d)
+		mulFractionRoundUp(r, d, n)
+	}
+
+	// pathPaymentAmountBought
+	r = min(r, a)
+
+	// pathPaymentAmountSold
+	mulFractionRoundUp(r, n, d)
+
 	return r.Int64()
+}
+
+// mulFractionRoundDown sets x = (x * n) / d, which is a round-down operation
+func mulFractionRoundDown(x big.Int, n big.Int, d big.Int) {
+	x.Mul(&x, &n)
+	x.Quo(&x, &d)
+}
+
+// mulFractionRoundUp sets x = ((x * n) + d - 1) / d, which is a round-up operation
+func mulFractionRoundUp(x big.Int, n big.Int, d big.Int) {
+	var one big.Int
+	one.SetInt64(1)
+
+	x.Mul(&x, &n)
+	x.Add(&x, &d)
+	x.Sub(&x, &one)
+	x.Quo(&x, &d)
+}
+
+// min impl
+func min(x big.Int, y big.Int) big.Int {
+	cmp := x.Cmp(&y)
+	if cmp <= 0 {
+		return x
+	}
+	return y
 }
