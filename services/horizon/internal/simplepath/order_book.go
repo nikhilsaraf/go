@@ -3,6 +3,7 @@ package simplepath
 import (
 	"errors"
 	"fmt"
+	"math"
 	"math/big"
 
 	sq "github.com/Masterminds/squirrel"
@@ -50,6 +51,10 @@ func (ob *orderBook) CostToConsumeLiquidity(sellingAmount xdr.Int64) (xdr.Int64,
 		if e != nil {
 			return 0, e
 		}
+		// overflow check
+		if willAddOverflow(buyingAmount, buyingUnitsExtracted) {
+			return xdr.Int64(0), fmt.Errorf("adding these two values will cause an integer overflow: %d, %d", buyingAmount, buyingUnitsExtracted)
+		}
 		buyingAmount += buyingUnitsExtracted
 		remaining -= sellingUnitsExtracted
 
@@ -59,6 +64,10 @@ func (ob *orderBook) CostToConsumeLiquidity(sellingAmount xdr.Int64) (xdr.Int64,
 		}
 	}
 	return 0, ErrNotEnough
+}
+
+func willAddOverflow(a int64, b int64) bool {
+	return a > math.MaxInt64-b
 }
 
 func (ob *orderBook) query() (sq.SelectBuilder, error) {
@@ -151,10 +160,7 @@ func mulFractionRoundDown(x int64, n int64, d int64) (int64, error) {
 	r.Mul(&r, &bn)
 	r.Quo(&r, &bd)
 
-	if r.IsInt64() {
-		return r.Int64(), nil
-	}
-	return 0, fmt.Errorf("cannot convert value to int64")
+	return toInt64Checked(r)
 }
 
 // mulFractionRoundUp sets x = ((x * n) + d - 1) / d, which is a round-up operation
@@ -173,10 +179,7 @@ func mulFractionRoundUp(x int64, n int64, d int64) (int64, error) {
 	r.Sub(&r, &one)
 	r.Quo(&r, &bd)
 
-	if r.IsInt64() {
-		return r.Int64(), nil
-	}
-	return 0, fmt.Errorf("cannot convert value to int64")
+	return toInt64Checked(r)
 }
 
 // min impl for int64
@@ -185,4 +188,11 @@ func min(x int64, y int64) int64 {
 		return x
 	}
 	return y
+}
+
+func toInt64Checked(x big.Int) (int64, error) {
+	if x.IsInt64() {
+		return x.Int64(), nil
+	}
+	return 0, fmt.Errorf("cannot convert big.Int value to int64")
 }

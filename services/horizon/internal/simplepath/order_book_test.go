@@ -110,3 +110,26 @@ func TestConvertToBuyingUnits(t *testing.T) {
 		})
 	}
 }
+
+func TestWillAddOverflow(t *testing.T) {
+	testCases := []struct {
+		a                int64
+		b                int64
+		wantWillOverflow bool
+	}{
+		{1, 2, false},
+		{0, 1, false},
+		{math.MaxInt64, 0, false},
+		{math.MaxInt64 - 1, 1, false},
+		{math.MaxInt64, 1, true},
+		{math.MaxInt64 - 1, 2, true},
+		{math.MaxInt64 - 1, math.MaxInt64, true},
+		{math.MaxInt64, math.MaxInt64, true},
+	}
+	for _, kase := range testCases {
+		t.Run(t.Name(), func(t *testing.T) {
+			r := willAddOverflow(kase.a, kase.b)
+			assert.Equal(t, kase.wantWillOverflow, r)
+		})
+	}
+}
