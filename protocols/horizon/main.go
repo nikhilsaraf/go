@@ -130,7 +130,7 @@ type Balance struct {
 	Limit              string `json:"limit,omitempty"`
 	BuyingLiabilities  string `json:"buying_liabilities"`
 	SellingLiabilities string `json:"selling_liabilities"`
-	LastModified       uint32 `json:"last_modified"`
+	LastModifiedLedger uint32 `json:"last_modified_ledger"`
 	base.Asset
 }
 
