@@ -16,11 +16,13 @@ func TestAccountActions_Show(t *testing.T) {
 		"/accounts/GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H",
 	)
 	if ht.Assert.Equal(200, w.Code) {
-
 		var result horizon.Account
 		err := json.Unmarshal(w.Body.Bytes(), &result)
 		ht.Require.NoError(err)
 		ht.Assert.Equal("3", result.Sequence)
+		for _, balance := range result.Balances {
+			ht.Assert.NotEqual(0, balance.LastModifiedLedger)
+		}
 	}
 
 	// missing account
