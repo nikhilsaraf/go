@@ -20,8 +20,14 @@ func TestAccountActions_Show(t *testing.T) {
 		err := json.Unmarshal(w.Body.Bytes(), &result)
 		ht.Require.NoError(err)
 		ht.Assert.Equal("3", result.Sequence)
+
+		ht.Assert.NotEqual(0, result.LastModifiedLedger)
 		for _, balance := range result.Balances {
-			ht.Assert.NotEqual(0, balance.LastModifiedLedger)
+			if balance.Type == "native" {
+				ht.Assert.Equal(uint32(0), balance.LastModifiedLedger)
+			} else {
+				ht.Assert.NotEqual(uint32(0), balance.LastModifiedLedger)
+			}
 		}
 	}
 

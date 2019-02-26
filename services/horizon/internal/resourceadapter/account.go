@@ -27,6 +27,7 @@ func PopulateAccount(
 	dest.SubentryCount = ca.Numsubentries
 	dest.InflationDestination = ca.Inflationdest.String
 	dest.HomeDomain = ca.HomeDomain.String
+	dest.LastModifiedLedger = ca.LastModified
 
 	PopulateAccountFlags(&dest.Flags, ca)
 	PopulateAccountThresholds(&dest.Thresholds, ca)
@@ -41,7 +42,7 @@ func PopulateAccount(
 	}
 
 	// add native balance
-	err = PopulateNativeBalance(&dest.Balances[len(dest.Balances)-1], ca.Balance, ca.BuyingLiabilities, ca.SellingLiabilities, ca.LastModified)
+	err = PopulateNativeBalance(&dest.Balances[len(dest.Balances)-1], ca.Balance, ca.BuyingLiabilities, ca.SellingLiabilities)
 	if err != nil {
 		return
 	}
