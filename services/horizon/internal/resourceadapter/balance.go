@@ -22,10 +22,11 @@ func PopulateBalance(ctx context.Context, dest *Balance, row core.Trustline) (er
 	dest.Limit = amount.String(row.Tlimit)
 	dest.Issuer = row.Issuer
 	dest.Code = row.Assetcode
+	dest.LastModified = row.LastModified
 	return
 }
 
-func PopulateNativeBalance(dest *Balance, stroops, buyingLiabilities, sellingLiabilities xdr.Int64) (err error) {
+func PopulateNativeBalance(dest *Balance, stroops, buyingLiabilities, sellingLiabilities xdr.Int64, lastModified uint32) (err error) {
 	dest.Type, err = assets.String(xdr.AssetTypeAssetTypeNative)
 	if err != nil {
 		return
@@ -34,6 +35,7 @@ func PopulateNativeBalance(dest *Balance, stroops, buyingLiabilities, sellingLia
 	dest.Balance = amount.String(stroops)
 	dest.BuyingLiabilities = amount.String(buyingLiabilities)
 	dest.SellingLiabilities = amount.String(sellingLiabilities)
+	dest.LastModified = lastModified
 	dest.Limit = ""
 	dest.Issuer = ""
 	dest.Code = ""
