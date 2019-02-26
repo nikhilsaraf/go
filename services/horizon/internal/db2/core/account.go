@@ -82,6 +82,7 @@ var selectAccount = sq.Select(
 	"a.homedomain",
 	"a.thresholds",
 	"a.flags",
+	"a.lastmodified",
 	// Liabilities can be NULL so can error without `coalesce`:
 	// `Invalid value for xdr.Int64`
 	"coalesce(a.buyingliabilities, 0) as buyingliabilities",
@@ -97,4 +98,5 @@ var selectAccountPreV10 = sq.Select(
 	"a.homedomain",
 	"a.thresholds",
 	"a.flags",
+	"a.lastmodified",
 ).From("accounts a")

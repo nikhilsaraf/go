@@ -41,7 +41,7 @@ func PopulateAccount(
 	}
 
 	// add native balance
-	err = PopulateNativeBalance(&dest.Balances[len(dest.Balances)-1], ca.Balance, ca.BuyingLiabilities, ca.SellingLiabilities)
+	err = PopulateNativeBalance(&dest.Balances[len(dest.Balances)-1], ca.Balance, ca.BuyingLiabilities, ca.SellingLiabilities, ca.LastModified)
 	if err != nil {
 		return
 	}
