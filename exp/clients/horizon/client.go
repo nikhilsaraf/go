@@ -33,8 +33,15 @@ func (c *Client) sendRequest(hr HorizonRequest, a interface{}) (err error) {
 	if err != nil {
 		return errors.Wrap(err, "Error creating HTTP request")
 	}
-	req.Header.Set("X-Client-Name", "go-stellar-sdk")
-	req.Header.Set("X-Client-Version", app.Version())
+
+	if c.AppName == "" {
+		c.AppName = "go-stellar-sdk"
+	}
+	req.Header.Set("X-Client-Name", c.AppName)
+	if c.AppVersion == "" {
+		c.AppVersion = app.Version()
+	}
+	req.Header.Set("X-Client-Version", c.AppVersion)
 
 	if c.horizonTimeOut == 0 {
 		c.horizonTimeOut = HorizonTimeOut
