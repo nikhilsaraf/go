@@ -12,7 +12,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/stellar/go/tools/stellar-archivist/historyarchive"
+	"github.com/stellar/go/support/historyarchive"
 )
 
 func status(a string, opts *Options) {
