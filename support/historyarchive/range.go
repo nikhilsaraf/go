@@ -64,7 +64,7 @@ func (r Range) String() string {
 	return fmt.Sprintf("[0x%8.8x, 0x%8.8x]", r.Low, r.High)
 }
 
-func (r Range) checkpoints() chan uint32 {
+func (r Range) Checkpoints() chan uint32 {
 	ch := make(chan uint32)
 	go func() {
 		for i := uint64(r.Low); i < uint64(r.High); i += uint64(CheckpointFreq) {
@@ -75,7 +75,7 @@ func (r Range) checkpoints() chan uint32 {
 	return ch
 }
 
-func (r Range) size() int {
+func (r Range) Size() int {
 	return int(r.High-r.Low) / int(CheckpointFreq)
 }
 

@@ -69,13 +69,13 @@ func categoryRequired(n string) bool {
 
 func CategoryCheckpointPath(cat string, chk uint32) string {
 	ext := categoryExt(cat)
-	pre := CheckpointPrefix(chk).path()
+	pre := CheckpointPrefix(chk).Path()
 	return path.Join(cat, pre, fmt.Sprintf("%s-%8.8x.%s", cat, chk, ext))
 }
 
 func BucketPath(bucket Hash) string {
 	pre := HashPrefix(bucket)
-	return path.Join("bucket", pre.path(), fmt.Sprintf("bucket-%s.xdr.gz", bucket))
+	return path.Join("bucket", pre.Path(), fmt.Sprintf("bucket-%s.xdr.gz", bucket))
 }
 
 // Make a goroutine that unconditionally pulls an error channel into

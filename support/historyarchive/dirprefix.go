@@ -11,7 +11,7 @@ import (
 
 type DirPrefix [3]uint8
 
-func (d DirPrefix) path() string {
+func (d DirPrefix) Path() string {
 	return d.pathPrefix(len(d))
 }
 
@@ -52,7 +52,7 @@ func RangePaths(r Range) []string {
 		}
 	}
 	// log.Printf("prefix %s and %s differ at point %d",
-	//            lowpre.path(), highpre.path(), diff)
+	//            lowpre.Path(), highpre.Path(), diff)
 	tmp := lowpre
 	for i := int(lowpre[diff]); i <= int(highpre[diff]); i++ {
 		tmp[diff] = uint8(i)

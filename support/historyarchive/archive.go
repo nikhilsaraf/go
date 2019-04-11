@@ -120,7 +120,7 @@ func (a *Archive) PutRootHAS(has HistoryArchiveState, opts *CommandOptions) erro
 }
 
 func (a *Archive) ListBucket(dp DirPrefix) (chan string, chan error) {
-	return a.backend.ListFiles(path.Join("bucket", dp.path()))
+	return a.backend.ListFiles(path.Join("bucket", dp.Path()))
 }
 
 func (a *Archive) ListAllBuckets() (chan string, chan error) {
