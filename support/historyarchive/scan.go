@@ -28,7 +28,7 @@ func (arch *Archive) ScanCheckpoints(opts *CommandOptions) error {
 	if e != nil {
 		return e
 	}
-	opts.Range = opts.Range.Clamp(state.Range())
+	opts.Range = opts.Range.clamp(state.Range())
 
 	log.Printf("Scanning checkpoint files in range: %s", opts.Range)
 
@@ -58,7 +58,7 @@ func (arch *Archive) ScanCheckpointsSlow(opts *CommandOptions) error {
 	cats := Categories()
 	go func() {
 		for _, cat := range cats {
-			for chk := range opts.Range.Checkpoints() {
+			for chk := range opts.Range.checkpoints() {
 				req <- scanCheckpointSlowReq{category: cat, checkpoint: chk}
 			}
 		}
@@ -337,7 +337,7 @@ func (arch *Archive) CheckCheckpointFilesMissing(opts *CommandOptions) map[strin
 	missing := make(map[string][]uint32)
 	for _, cat := range Categories() {
 		missing[cat] = make([]uint32, 0)
-		for ix := range opts.Range.Checkpoints() {
+		for ix := range opts.Range.checkpoints() {
 			_, ok := arch.checkpointFiles[cat][ix]
 			if !ok {
 				missing[cat] = append(missing[cat], ix)

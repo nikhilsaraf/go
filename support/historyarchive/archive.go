@@ -120,7 +120,7 @@ func (a *Archive) PutRootHAS(has HistoryArchiveState, opts *CommandOptions) erro
 }
 
 func (a *Archive) ListBucket(dp DirPrefix) (chan string, chan error) {
-	return a.backend.ListFiles(path.Join("bucket", dp.Path()))
+	return a.backend.ListFiles(path.Join("bucket", dp.path()))
 }
 
 func (a *Archive) ListAllBuckets() (chan string, chan error) {
@@ -194,14 +194,14 @@ func Connect(u string, opts ConnectOptions) (*Archive, error) {
 		if len(pth) > 0 && pth[0] == '/' {
 			pth = pth[1:]
 		}
-		arch.backend, err = MakeS3Backend(parsed.Host, pth, opts)
+		arch.backend, err = makeS3Backend(parsed.Host, pth, opts)
 	} else if parsed.Scheme == "file" {
 		pth = path.Join(parsed.Host, pth)
-		arch.backend = MakeFsBackend(pth, opts)
+		arch.backend = makeFsBackend(pth, opts)
 	} else if parsed.Scheme == "http" {
-		arch.backend = MakeHttpBackend(parsed, opts)
+		arch.backend = makeHttpBackend(parsed, opts)
 	} else if parsed.Scheme == "mock" {
-		arch.backend = MakeMockBackend(opts)
+		arch.backend = makeMockBackend(opts)
 	} else {
 		err = errors.New("unknown URL scheme: '" + parsed.Scheme + "'")
 	}

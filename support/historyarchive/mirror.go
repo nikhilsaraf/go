@@ -17,7 +17,7 @@ func Mirror(src *Archive, dst *Archive, opts *CommandOptions) error {
 		return e
 	}
 
-	opts.Range = opts.Range.Clamp(rootHAS.Range())
+	opts.Range = opts.Range.clamp(rootHAS.Range())
 
 	log.Printf("copying range %s\n", opts.Range)
 
@@ -29,7 +29,7 @@ func Mirror(src *Archive, dst *Archive, opts *CommandOptions) error {
 	var errs uint32
 	tick := makeTicker(func(ticks uint) {
 		bucketFetchMutex.Lock()
-		sz := opts.Range.Size()
+		sz := opts.Range.size()
 		log.Printf("Copied %d/%d checkpoints (%f%%), %d buckets",
 			ticks, sz,
 			100.0*float64(ticks)/float64(sz),
@@ -38,7 +38,7 @@ func Mirror(src *Archive, dst *Archive, opts *CommandOptions) error {
 	})
 
 	var wg sync.WaitGroup
-	checkpoints := opts.Range.Checkpoints()
+	checkpoints := opts.Range.checkpoints()
 	wg.Add(opts.Concurrency)
 	for i := 0; i < opts.Concurrency; i++ {
 		go func() {
@@ -83,7 +83,7 @@ func Mirror(src *Archive, dst *Archive, opts *CommandOptions) error {
 
 	wg.Wait()
 	log.Printf("Copied %d checkpoints, %d buckets",
-		opts.Range.Size(), len(bucketFetch))
+		opts.Range.size(), len(bucketFetch))
 	close(tick)
 	e = dst.PutRootHAS(rootHAS, opts)
 	errs += noteError(e)

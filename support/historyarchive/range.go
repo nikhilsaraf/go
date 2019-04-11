@@ -48,7 +48,7 @@ func MakeRange(low uint32, high uint32) Range {
 	}
 }
 
-func (r Range) Clamp(other Range) Range {
+func (r Range) clamp(other Range) Range {
 	low := r.Low
 	high := r.High
 	if low < other.Low {
@@ -64,7 +64,7 @@ func (r Range) String() string {
 	return fmt.Sprintf("[0x%8.8x, 0x%8.8x]", r.Low, r.High)
 }
 
-func (r Range) Checkpoints() chan uint32 {
+func (r Range) checkpoints() chan uint32 {
 	ch := make(chan uint32)
 	go func() {
 		for i := uint64(r.Low); i < uint64(r.High); i += uint64(CheckpointFreq) {
@@ -75,11 +75,11 @@ func (r Range) Checkpoints() chan uint32 {
 	return ch
 }
 
-func (r Range) Size() int {
+func (r Range) size() int {
 	return int(r.High-r.Low) / int(CheckpointFreq)
 }
 
-func (r Range) CollapsedString() string {
+func (r Range) collapsedString() string {
 	if r.Low == r.High {
 		return fmt.Sprintf("0x%8.8x", r.Low)
 	} else {
@@ -87,15 +87,15 @@ func (r Range) CollapsedString() string {
 	}
 }
 
-type ByUint32 []uint32
+type byUint32 []uint32
 
-func (a ByUint32) Len() int           { return len(a) }
-func (a ByUint32) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a ByUint32) Less(i, j int) bool { return a[i] < a[j] }
+func (a byUint32) Len() int           { return len(a) }
+func (a byUint32) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a byUint32) Less(i, j int) bool { return a[i] < a[j] }
 
 func fmtRangeList(vs []uint32) string {
 
-	sort.Sort(ByUint32(vs))
+	sort.Sort(byUint32(vs))
 
 	s := make([]string, 0, 10)
 	var curr *Range
@@ -106,14 +106,14 @@ func fmtRangeList(vs []uint32) string {
 				curr.High = t
 				continue
 			} else {
-				s = append(s, curr.CollapsedString())
+				s = append(s, curr.collapsedString())
 				curr = nil
 			}
 		}
 		curr = &Range{Low: t, High: t}
 	}
 	if curr != nil {
-		s = append(s, curr.CollapsedString())
+		s = append(s, curr.collapsedString())
 	}
 
 	return strings.Join(s, ", ")
