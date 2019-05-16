@@ -9,6 +9,8 @@ import (
 	"github.com/stellar/go/xdr"
 )
 
+var bucketRegex = regexp.MustCompile(`(bucket/[0-9a-z]{2}/[0-9a-z]{2}/[0-9a-z]{2}/bucket-[0-9a-z]+\.xdr\.gz)`)
+
 // readResult is the result of reading a bucket value
 type readResult struct {
 	entry xdr.LedgerEntry
@@ -17,12 +19,11 @@ type readResult struct {
 
 // MemoryStateReader is the in-memory representation of HistoryArchiveState
 type MemoryStateReader struct {
-	has             *historyarchive.HistoryArchiveState
-	archive         *historyarchive.Archive
-	sequence        uint32
-	bucketHashRegex *regexp.Regexp
-	active          bool
-	readChan        chan readResult
+	has      *historyarchive.HistoryArchiveState
+	archive  *historyarchive.Archive
+	sequence uint32
+	active   bool
+	readChan chan readResult
 }
 
 // enforce MemoryStateReader to implement StateReader
@@ -35,23 +36,13 @@ func MakeMemoryStateReader(archive *historyarchive.Archive, sequence uint32, buf
 		return nil, fmt.Errorf("unable to get checkpoint HAS at ledger sequence %d: %s", sequence, e)
 	}
 
-	bhr, e := makeRegex()
-	if e != nil {
-		return nil, fmt.Errorf("unable to compile regexp: %s", e)
-	}
-
 	return &MemoryStateReader{
-		has:             &has,
-		archive:         archive,
-		sequence:        sequence,
-		bucketHashRegex: bhr,
-		active:          false,
-		readChan:        make(chan readResult, bufferSize),
+		has:      &has,
+		archive:  archive,
+		sequence: sequence,
+		active:   false,
+		readChan: make(chan readResult, bufferSize),
 	}, nil
-}
-
-func makeRegex() (*regexp.Regexp, error) {
-	return regexp.Compile(`(bucket/[0-9a-z]{2}/[0-9a-z]{2}/[0-9a-z]{2}/bucket-[0-9a-z]+\.xdr\.gz)`)
 }
 
 func getBucketPath(r *regexp.Regexp, s string) (string, error) {
@@ -115,7 +106,7 @@ func (msr *MemoryStateReader) bufferNext() {
 
 // streamBucketContents pushes value onto the read channel, returning false when the channel needs to be closed otherwise true
 func (msr *MemoryStateReader) streamBucketContents(filepath string, hash historyarchive.Hash) bool {
-	bucketPath, e := getBucketPath(msr.bucketHashRegex, filepath)
+	bucketPath, e := getBucketPath(bucketRegex, filepath)
 	if e != nil {
 		msr.readChan <- readResult{xdr.LedgerEntry{}, fmt.Errorf("cannot get bucket path for filepath '%s' with hash '%s': %s", filepath, hash, e)}
 		return false
