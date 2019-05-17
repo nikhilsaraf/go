@@ -39,6 +39,7 @@ func GenerateMarketSummary(s *tickerdb.TickerSession) (ms MarketSummary, err err
 	var marketStatsSlice []MarketStats
 	now := time.Now()
 	nowMillis := utils.TimeToUnixEpoch(now)
+	nowRFC339 := utils.TimeToRFC3339(now)
 
 	dbMarkets, err := s.RetrieveMarketData()
 	if err != nil {
@@ -46,30 +47,48 @@ func GenerateMarketSummary(s *tickerdb.TickerSession) (ms MarketSummary, err err
 	}
 
 	for _, dbMarket := range dbMarkets {
-		marketStats := dbMarketToJSON(dbMarket)
+		marketStats := dbMarketToMarketStats(dbMarket)
 		marketStatsSlice = append(marketStatsSlice, marketStats)
 	}
 
 	ms = MarketSummary{
-		GeneratedAt: nowMillis,
-		Pairs:       marketStatsSlice,
+		GeneratedAt:        nowMillis,
+		GeneratedAtRFC3339: nowRFC339,
+		Pairs:              marketStatsSlice,
 	}
 	return
 }
 
-func dbMarketToJSON(m tickerdb.Market) MarketStats {
-	closeTime := utils.TimeToUnixEpoch(m.LastPriceCloseTime)
+func dbMarketToMarketStats(m tickerdb.Market) MarketStats {
+	closeTime := utils.TimeToRFC3339(m.LastPriceCloseTime)
+
+	spread, spreadMidPoint := utils.CalcSpread(m.HighestBid, m.LowestAsk)
 	return MarketStats{
-		TradePairName:      m.TradePair,
-		BaseVolume24h:      m.BaseVolume24h,
-		CounterVolume24h:   m.CounterVolume24h,
-		TradeCount24h:      m.TradeCount24h,
-		BaseVolume7d:       m.BaseVolume7d,
-		CounterVolume7d:    m.CounterVolume7d,
-		TradeCount7d:       m.TradeCount7d,
-		LastPrice:          m.LastPrice,
-		LastPriceCloseTime: closeTime,
-		PriceChange24h:     m.PriceChange24h,
-		PriceChange7d:      m.PriceChange7d,
+		TradePairName:    m.TradePair,
+		BaseVolume24h:    m.BaseVolume24h,
+		CounterVolume24h: m.CounterVolume24h,
+		TradeCount24h:    m.TradeCount24h,
+		Open24h:          m.OpenPrice24h,
+		Low24h:           m.LowestPrice24h,
+		High24h:          m.HighestPrice24h,
+		Change24h:        m.PriceChange24h,
+		BaseVolume7d:     m.BaseVolume7d,
+		CounterVolume7d:  m.CounterVolume7d,
+		TradeCount7d:     m.TradeCount7d,
+		Open7d:           m.OpenPrice7d,
+		Low7d:            m.LowestPrice7d,
+		High7d:           m.HighestPrice7d,
+		Change7d:         m.PriceChange7d,
+		Price:            m.LastPrice,
+		Close:            m.LastPrice,
+		BidCount:         m.NumBids,
+		BidVolume:        m.BidVolume,
+		BidMax:           m.HighestBid,
+		AskCount:         m.NumAsks,
+		AskVolume:        m.AskVolume,
+		AskMin:           m.LowestAsk,
+		Spread:           spread,
+		SpreadMidPoint:   spreadMidPoint,
+		CloseTime:        closeTime,
 	}
 }

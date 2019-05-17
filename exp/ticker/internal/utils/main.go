@@ -58,3 +58,18 @@ func GetAssetString(assetType string, code string, issuer string) string {
 func TimeToUnixEpoch(t time.Time) int64 {
 	return t.UnixNano() / 1000000
 }
+
+// TimeToRFC3339 converts a time.Time to a string in RFC3339 format
+func TimeToRFC3339(t time.Time) string {
+	return t.Format(time.RFC3339)
+}
+
+// CalcSpread calculates the spread stats for the given bidMax and askMin orderbook values
+func CalcSpread(bidMax float64, askMin float64) (spread float64, midPoint float64) {
+	if askMin == 0 || bidMax == 0 {
+		return 0, 0
+	}
+	spread = (askMin - bidMax) / askMin
+	midPoint = bidMax + spread/2.0
+	return
+}

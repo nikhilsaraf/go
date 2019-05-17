@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	horizonclient "github.com/stellar/go/exp/clients/horizon"
+	horizonclient "github.com/stellar/go/clients/horizonclient"
 	"github.com/stellar/go/exp/ticker/internal/scraper"
 	"github.com/stellar/go/exp/ticker/internal/tickerdb"
 	hProtocol "github.com/stellar/go/protocols/horizon"
@@ -28,12 +28,15 @@ func StreamTrades(
 	}
 	handler := func(trade hProtocol.Trade) {
 		l.Infof("New trade arrived. ID: %v; Close Time: %v\n", trade.ID, trade.LedgerCloseTime)
+		scraper.NormalizeTradeAssets(&trade)
 		bID, cID, err := findBaseAndCounter(s, trade)
 		if err != nil {
+			l.Errorln(err)
 			return
 		}
 		dbTrade, err := hProtocolTradeToDBTrade(trade, bID, cID)
 		if err != nil {
+			l.Errorln(err)
 			return
 		}
 
