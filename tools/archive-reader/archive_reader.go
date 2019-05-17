@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	ledgerPtr := flag.Uint64("ledger", 0, "`ledger to analyze` (tip: has to be of the form `ledger = 64^n - 1`)")
+	ledgerPtr := flag.Uint64("ledger", 0, "`ledger to analyze` (tip: has to be of the form `ledger = 64*n - 1`, where n is > 0)")
 	flag.Parse()
 	var seqNum uint32 = uint32(*ledgerPtr)
 
