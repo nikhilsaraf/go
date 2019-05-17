@@ -52,6 +52,8 @@ func (msr *MultiMergeStateReader) start() {
 func (msr *MultiMergeStateReader) bufferNext() {
 	defer close(msr.readChan)
 
+	// iterate from newest to oldest bucket and track keys already seen
+	seen := map[xdr.LedgerKey]bool{}
 	for _, hash := range msr.has.Buckets() {
 		if !msr.archive.BucketExists(hash) {
 			msr.readChan <- readResult{xdr.LedgerEntry{}, fmt.Errorf("bucket hash does not exist: %s", hash)}
@@ -90,7 +92,8 @@ func (msr *MultiMergeStateReader) bufferNext() {
 			return
 		}
 
-		shouldContinue := msr.streamBucketContents(bucketPath, hash)
+		var shouldContinue bool
+		seen, shouldContinue = msr.streamBucketContents(bucketPath, hash, seen)
 		if !shouldContinue {
 			return
 		}
@@ -98,11 +101,15 @@ func (msr *MultiMergeStateReader) bufferNext() {
 }
 
 // streamBucketContents pushes value onto the read channel, returning false when the channel needs to be closed otherwise true
-func (msr *MultiMergeStateReader) streamBucketContents(bucketPath string, hash historyarchive.Hash) bool {
+func (msr *MultiMergeStateReader) streamBucketContents(
+	bucketPath string,
+	hash historyarchive.Hash,
+	seen map[xdr.LedgerKey]bool,
+) (map[xdr.LedgerKey]bool, bool) {
 	rdr, e := msr.archive.GetXdrStream(bucketPath)
 	if e != nil {
 		msr.readChan <- readResult{xdr.LedgerEntry{}, fmt.Errorf("cannot get xdr stream for bucketPath '%s': %s", bucketPath, e)}
-		return false
+		return seen, false
 	}
 	defer rdr.Close()
 
@@ -112,21 +119,27 @@ func (msr *MultiMergeStateReader) streamBucketContents(bucketPath string, hash h
 		if e = rdr.ReadOne(&entry); e != nil {
 			if e == io.EOF {
 				// proceed to the next bucket hash
-				return true
+				return seen, true
 			}
 			msr.readChan <- readResult{xdr.LedgerEntry{}, fmt.Errorf("Error on XDR record %d of bucketPath '%s': %s", n, bucketPath, e)}
-			return false
+			return seen, false
 		}
+		n++
 
 		liveEntry, ok := entry.GetLiveEntry()
 		if ok {
+			// ignore entry if we've seen it previously
+			key := liveEntry.LedgerKey()
+			if _, exists := seen[key]; exists {
+				continue
+			}
+			seen[key] = true
+
 			// since readChan is a buffered channel we block here until one item is consumed on the dequeue side.
 			// this is our intended behavior, which ensures we only buffer exactly bufferSize results in the channel.
 			msr.readChan <- readResult{liveEntry, nil}
 		}
-		// TODO should we do something if we don't have a live entry?
-
-		n++
+		// we can ignore dead entries because we're only ever concerned with the first live entry values
 	}
 }
 
