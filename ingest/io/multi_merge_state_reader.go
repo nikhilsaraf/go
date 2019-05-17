@@ -50,10 +50,10 @@ func (msr *MultiMergeStateReader) start() {
 }
 
 func (msr *MultiMergeStateReader) bufferNext() {
+	defer close(msr.readChan)
 	for _, hash := range msr.has.Buckets() {
 		if !msr.archive.BucketExists(hash) {
 			msr.readChan <- readResult{xdr.LedgerEntry{}, fmt.Errorf("bucket hash does not exist: %s", hash)}
-			close(msr.readChan)
 			return
 		}
 
@@ -80,17 +80,14 @@ func (msr *MultiMergeStateReader) bufferNext() {
 		// process values
 		if e != nil {
 			msr.readChan <- readResult{xdr.LedgerEntry{}, fmt.Errorf("received error on errChan when listing buckets for hash '%s': %s", hash, e)}
-			close(msr.readChan)
 			return
 		}
 		shouldContinue := msr.streamBucketContents(filepath, hash)
 		if !shouldContinue {
-			close(msr.readChan)
 			return
 		}
 	}
 
-	close(msr.readChan)
 	return
 }
 
