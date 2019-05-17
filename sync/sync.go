@@ -20,6 +20,8 @@ import (
 const satoshipay = "https://stellar-horizon.satoshipay.io"
 const sdf = "https://horizon.stellar.org"
 
+const perS = 15
+
 type element struct {
 	tx     string
 	ledger int
@@ -28,6 +30,9 @@ type element struct {
 
 func main() {
 	setLogFile()
+
+	log.Printf("configured to submit %d tx per second", perS)
+
 	const firstLedger = 23899050
 
 	var e error
@@ -125,7 +130,7 @@ func main() {
 		HTTP: http.DefaultClient,
 	}
 	for i, el := range txs {
-		time.Sleep(time.Second / 20)
+		time.Sleep(time.Second / perS)
 
 		log.Printf("\n\nsubmitting to network (i = %d): ledger=%d, hash=%s, tx=%s", i, el.ledger, el.hash, el.tx)
 		postResp, e := hSDF.SubmitTransaction(el.tx)
