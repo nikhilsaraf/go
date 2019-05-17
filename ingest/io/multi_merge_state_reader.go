@@ -1,6 +1,7 @@
 package io
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"io"
 	"sync"
@@ -53,7 +54,7 @@ func (msr *MultiMergeStateReader) bufferNext() {
 	defer close(msr.readChan)
 
 	// iterate from newest to oldest bucket and track keys already seen
-	seen := map[xdr.LedgerKey]bool{}
+	seen := map[string]bool{}
 	for _, hash := range msr.has.Buckets() {
 		if !msr.archive.BucketExists(hash) {
 			msr.readChan <- readResult{xdr.LedgerEntry{}, fmt.Errorf("bucket hash does not exist: %s", hash)}
@@ -104,8 +105,8 @@ func (msr *MultiMergeStateReader) bufferNext() {
 func (msr *MultiMergeStateReader) streamBucketContents(
 	bucketPath string,
 	hash historyarchive.Hash,
-	seen map[xdr.LedgerKey]bool,
-) (map[xdr.LedgerKey]bool, bool) {
+	seen map[string]bool,
+) (map[string]bool, bool) {
 	rdr, e := msr.archive.GetXdrStream(bucketPath)
 	if e != nil {
 		msr.readChan <- readResult{xdr.LedgerEntry{}, fmt.Errorf("cannot get xdr stream for bucketPath '%s': %s", bucketPath, e)}
@@ -124,22 +125,30 @@ func (msr *MultiMergeStateReader) streamBucketContents(
 			msr.readChan <- readResult{xdr.LedgerEntry{}, fmt.Errorf("Error on XDR record %d of bucketPath '%s': %s", n, bucketPath, e)}
 			return seen, false
 		}
-		n++
 
 		liveEntry, ok := entry.GetLiveEntry()
 		if ok {
 			// ignore entry if we've seen it previously
 			key := liveEntry.LedgerKey()
-			if _, exists := seen[key]; exists {
+			keyBytes, e := key.MarshalBinary()
+			if e != nil {
+				msr.readChan <- readResult{xdr.LedgerEntry{}, fmt.Errorf("Error marshaling XDR record %d of bucketPath '%s': %s", n, bucketPath, e)}
+				return seen, false
+			}
+			shasum := fmt.Sprintf("%x", sha256.Sum256(keyBytes))
+
+			if _, exists := seen[shasum]; exists {
+				n++
 				continue
 			}
-			seen[key] = true
+			seen[shasum] = true
 
 			// since readChan is a buffered channel we block here until one item is consumed on the dequeue side.
 			// this is our intended behavior, which ensures we only buffer exactly bufferSize results in the channel.
 			msr.readChan <- readResult{liveEntry, nil}
 		}
 		// we can ignore dead entries because we're only ever concerned with the first live entry values
+		n++
 	}
 }
 
