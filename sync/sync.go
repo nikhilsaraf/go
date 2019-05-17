@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/stellar/go/clients/horizon"
+	"github.com/stellar/go/support/errors"
 )
 
 const satoshipay = "https://stellar-horizon.satoshipay.io"
@@ -154,10 +155,22 @@ func submitTx(i int, hSDF *horizon.Client, el element) {
 	log.Printf("\n\nsubmitting to network (i = %d): ledger=%d, hash=%s, tx=%s", i, el.ledger, el.hash, el.tx)
 	postResp, e := hSDF.SubmitTransaction(el.tx)
 	if e != nil {
-		if herr, ok := e.(*horizon.Error); ok {
-			fmt.Printf("horizon error details: %v", herr.Problem)
+		if herr, ok := errors.Cause(e).(*horizon.Error); ok {
+			var rcs *horizon.TransactionResultCodes
+			rcs, e = herr.ResultCodes()
+			if e != nil {
+				log.Printf("error: no result codes from horizon: %s\n", e)
+				return
+			}
+
+			if rcs.TransactionCode == "tx_bad_seq" {
+				log.Println("error: tx_bad_seq")
+				return
+			}
+
+			log.Println("error: result code details: tx code = ", rcs.TransactionCode, ", opcodes = ", rcs.OperationCodes)
 		} else {
-			log.Printf("error: %s", e)
+			log.Printf("error: tx failed for unknown reason, error message: %s\n", e)
 		}
 		return
 	}
