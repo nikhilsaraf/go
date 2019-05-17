@@ -21,6 +21,7 @@ const satoshipay = "https://stellar-horizon.satoshipay.io"
 const sdf = "https://horizon.stellar.org"
 
 const perS = 15
+const mode = "resubmit" // or "submit" or "resubmit"
 
 type element struct {
 	tx     string
@@ -31,7 +32,7 @@ type element struct {
 func main() {
 	setLogFile()
 
-	log.Printf("configured to submit %d tx per second", perS)
+	log.Printf("configured to submit %d tx per second using mode = '%s'", perS, mode)
 
 	const firstLedger = 23899050
 
@@ -129,24 +130,45 @@ func main() {
 		URL:  sdf,
 		HTTP: http.DefaultClient,
 	}
-	for i, el := range txs {
-		time.Sleep(time.Second / perS)
-
-		log.Printf("\n\nsubmitting to network (i = %d): ledger=%d, hash=%s, tx=%s", i, el.ledger, el.hash, el.tx)
-		postResp, e := hSDF.SubmitTransaction(el.tx)
-		if e != nil {
-			log.Printf("error: %s", e)
-			continue
+	if mode == "submit" {
+		for i, el := range txs {
+			time.Sleep(time.Second / perS)
+			submitTx(i, hSDF, el)
 		}
+	} else if mode == "resubmit" {
+		for i, el := range txs {
+			_, e := hSDF.LoadTransaction(el.hash)
+			if e != nil {
+				log.Printf("transaction not found on SDF, resubmitting (i = %d): ledger=%d, hash=%s", i, el.ledger, el.hash)
 
-		btes, e := json.MarshalIndent(postResp, "", "    ")
-		if e != nil {
-			log.Printf("error marshaling resp: %s", e)
-			log.Printf("last result error: %v", postResp)
-			continue
+				submitTx(i, hSDF, el)
+				time.Sleep(time.Second / perS)
+				continue
+			}
+			log.Printf("(i = %d) found transaction on SDF with hash: %s", i, el.hash)
 		}
-		log.Printf("tx result: %v", string(btes))
 	}
+}
+
+func submitTx(i int, hSDF *horizon.Client, el element) {
+	log.Printf("\n\nsubmitting to network (i = %d): ledger=%d, hash=%s, tx=%s", i, el.ledger, el.hash, el.tx)
+	postResp, e := hSDF.SubmitTransaction(el.tx)
+	if e != nil {
+		if herr, ok := e.(*horizon.Error); ok {
+			fmt.Printf("horizon error details: %v", herr.Problem)
+		} else {
+			log.Printf("error: %s", e)
+		}
+		return
+	}
+
+	btes, e := json.MarshalIndent(postResp, "", "    ")
+	if e != nil {
+		log.Printf("error marshaling resp: %s", e)
+		log.Printf("last result error: %v", postResp)
+		return
+	}
+	log.Printf("tx result: %v", string(btes))
 }
 
 func setLogFile() {
