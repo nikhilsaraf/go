@@ -137,7 +137,13 @@ func main() {
 			continue
 		}
 
-		log.Printf("result: %v", postResp)
+		btes, e := json.MarshalIndent(postResp, "", "    ")
+		if e != nil {
+			log.Printf("error marshaling resp: %s", e)
+			log.Printf("last result error: %v", postResp)
+			continue
+		}
+		log.Printf("tx result: %v", string(btes))
 	}
 }
 
