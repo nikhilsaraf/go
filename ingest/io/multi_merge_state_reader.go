@@ -3,6 +3,7 @@ package io
 import (
 	"fmt"
 	"io"
+	"sync"
 
 	"github.com/stellar/go/support/historyarchive"
 	"github.com/stellar/go/xdr"
@@ -15,6 +16,7 @@ type MultiMergeStateReader struct {
 	sequence uint32
 	active   bool
 	readChan chan readResult
+	once     *sync.Once
 }
 
 // enforce MultiMergeStateReader to implement StateReader
@@ -33,11 +35,16 @@ func MakeMultiMergeStateReader(archive *historyarchive.Archive, sequence uint32,
 		sequence: sequence,
 		active:   false,
 		readChan: make(chan readResult, bufferSize),
+		once:     &sync.Once{},
 	}, nil
 }
 
 // BufferReads triggers the streaming logic needed to be done before Read() can actually produce a result
 func (msr *MultiMergeStateReader) BufferReads() {
+	msr.once.Do(msr.start)
+}
+
+func (msr *MultiMergeStateReader) start() {
 	msr.active = true
 	go msr.bufferNext()
 }
@@ -134,7 +141,7 @@ func (msr *MultiMergeStateReader) GetSequence() uint32 {
 // Read returns a new ledger entry on each call, returning false when the stream ends
 func (msr *MultiMergeStateReader) Read() (bool, xdr.LedgerEntry, error) {
 	if !msr.active {
-		return false, xdr.LedgerEntry{}, fmt.Errorf("memory state reader not active, need to call BufferReads() before calling Read()")
+		msr.BufferReads()
 	}
 
 	// blocking call. anytime we consume from this channel, the background goroutine will stream in the next value
