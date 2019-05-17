@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 
@@ -9,7 +10,15 @@ import (
 )
 
 func main() {
-	var seqNum uint32 = 21686847
+	ledgerPtr := flag.Uint64("ledger", 0, "`ledger to analyze` (tip: has to be of the form `ledger = 64^n - 1`)")
+	flag.Parse()
+	var seqNum uint32 = uint32(*ledgerPtr)
+
+	if seqNum == 0 {
+		flag.Usage()
+		return
+	}
+
 	archive, e := archive()
 	if e != nil {
 		panic(e)
