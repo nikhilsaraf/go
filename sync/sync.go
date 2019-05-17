@@ -125,12 +125,9 @@ func main() {
 		HTTP: http.DefaultClient,
 	}
 	for i, el := range txs {
-		if i >= 1 {
-			return
-		}
 		time.Sleep(time.Second / 20)
 
-		log.Printf("submitting to network: ledger=%d, hash=%s, tx=%s", el.ledger, el.hash, el.tx)
+		log.Printf("\n\nsubmitting to network (i = %d): ledger=%d, hash=%s, tx=%s", i, el.ledger, el.hash, el.tx)
 		postResp, e := hSDF.SubmitTransaction(el.tx)
 		if e != nil {
 			log.Printf("error: %s", e)
