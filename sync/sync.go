@@ -13,6 +13,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/stellar/go/clients/horizon"
 )
 
 const satoshipay = "https://stellar-horizon.satoshipay.io"
@@ -118,10 +120,10 @@ func main() {
 		// log.Printf("ledger=%d, hash=%s, tx=%s", el.ledger, el.hash, el.tx)
 	}
 
-	// hSDF := &horizon.Client{
-	// 	URL:  sdf,
-	// 	HTTP: http.DefaultClient,
-	// }
+	hSDF := &horizon.Client{
+		URL:  sdf,
+		HTTP: http.DefaultClient,
+	}
 	for i, el := range txs {
 		if i >= 1 {
 			return
@@ -129,13 +131,13 @@ func main() {
 		time.Sleep(time.Second / 20)
 
 		log.Printf("submitting to network: ledger=%d, hash=%s, tx=%s", el.ledger, el.hash, el.tx)
-		// postResp, e := hSDF.SubmitTransaction(el.tx)
-		// if e != nil {
-		// 	log.Printf("error: %s", e)
-		// 	continue
-		// }
+		postResp, e := hSDF.SubmitTransaction(el.tx)
+		if e != nil {
+			log.Printf("error: %s", e)
+			continue
+		}
 
-		// log.Printf("result: %v", postResp)
+		log.Printf("result: %v", postResp)
 	}
 }
 
