@@ -51,6 +51,7 @@ func (msr *MultiMergeStateReader) start() {
 
 func (msr *MultiMergeStateReader) bufferNext() {
 	defer close(msr.readChan)
+
 	for _, hash := range msr.has.Buckets() {
 		if !msr.archive.BucketExists(hash) {
 			msr.readChan <- readResult{xdr.LedgerEntry{}, fmt.Errorf("bucket hash does not exist: %s", hash)}
@@ -82,26 +83,25 @@ func (msr *MultiMergeStateReader) bufferNext() {
 			msr.readChan <- readResult{xdr.LedgerEntry{}, fmt.Errorf("received error on errChan when listing buckets for hash '%s': %s", hash, e)}
 			return
 		}
-		shouldContinue := msr.streamBucketContents(filepath, hash)
+
+		bucketPath, e := getBucketPath(bucketRegex, filepath)
+		if e != nil {
+			msr.readChan <- readResult{xdr.LedgerEntry{}, fmt.Errorf("cannot get bucket path for filepath '%s' with hash '%s': %s", filepath, hash, e)}
+			return
+		}
+
+		shouldContinue := msr.streamBucketContents(bucketPath, hash)
 		if !shouldContinue {
 			return
 		}
 	}
-
-	return
 }
 
 // streamBucketContents pushes value onto the read channel, returning false when the channel needs to be closed otherwise true
-func (msr *MultiMergeStateReader) streamBucketContents(filepath string, hash historyarchive.Hash) bool {
-	bucketPath, e := getBucketPath(bucketRegex, filepath)
-	if e != nil {
-		msr.readChan <- readResult{xdr.LedgerEntry{}, fmt.Errorf("cannot get bucket path for filepath '%s' with hash '%s': %s", filepath, hash, e)}
-		return false
-	}
-
+func (msr *MultiMergeStateReader) streamBucketContents(bucketPath string, hash historyarchive.Hash) bool {
 	rdr, e := msr.archive.GetXdrStream(bucketPath)
 	if e != nil {
-		msr.readChan <- readResult{xdr.LedgerEntry{}, fmt.Errorf("cannot get xdr stream for file '%s': %s", filepath, e)}
+		msr.readChan <- readResult{xdr.LedgerEntry{}, fmt.Errorf("cannot get xdr stream for bucketPath '%s': %s", bucketPath, e)}
 		return false
 	}
 	defer rdr.Close()
@@ -114,7 +114,7 @@ func (msr *MultiMergeStateReader) streamBucketContents(filepath string, hash his
 				// proceed to the next bucket hash
 				return true
 			}
-			msr.readChan <- readResult{xdr.LedgerEntry{}, fmt.Errorf("Error on XDR record %d of filepath '%s': %s", n, filepath, e)}
+			msr.readChan <- readResult{xdr.LedgerEntry{}, fmt.Errorf("Error on XDR record %d of bucketPath '%s': %s", n, bucketPath, e)}
 			return false
 		}
 
