@@ -152,7 +152,8 @@ func main() {
 }
 
 func submitTx(i int, hSDF *horizon.Client, el element) {
-	log.Printf("\n\nsubmitting to network (i = %d): ledger=%d, hash=%s, tx=%s", i, el.ledger, el.hash, el.tx)
+	defer log.Println()
+	log.Printf("submitting to network (i = %d): ledger=%d, hash=%s, tx=%s", i, el.ledger, el.hash, el.tx)
 	postResp, e := hSDF.SubmitTransaction(el.tx)
 	if e != nil {
 		if herr, ok := errors.Cause(e).(*horizon.Error); ok {
