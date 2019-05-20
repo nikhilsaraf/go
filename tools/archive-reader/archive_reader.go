@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/stellar/go/ingest/adapters"
+	"github.com/stellar/go/exp/ingest/adapters"
 	"github.com/stellar/go/support/historyarchive"
 )
 
