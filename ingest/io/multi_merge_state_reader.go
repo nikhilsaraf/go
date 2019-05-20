@@ -4,11 +4,20 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"io"
+	"regexp"
 	"sync"
 
 	"github.com/stellar/go/support/historyarchive"
 	"github.com/stellar/go/xdr"
 )
+
+var bucketRegex = regexp.MustCompile(`(bucket/[0-9a-z]{2}/[0-9a-z]{2}/[0-9a-z]{2}/bucket-[0-9a-z]+\.xdr\.gz)`)
+
+// readResult is the result of reading a bucket value
+type readResult struct {
+	entry xdr.LedgerEntry
+	e     error
+}
 
 // MultiMergeStateReader is the 18-way merge implementation that reads HistoryArchiveState
 type MultiMergeStateReader struct {
@@ -40,14 +49,12 @@ func MakeMultiMergeStateReader(archive *historyarchive.Archive, sequence uint32,
 	}, nil
 }
 
-// BufferReads triggers the streaming logic needed to be done before Read() can actually produce a result
-func (msr *MultiMergeStateReader) BufferReads() {
-	msr.once.Do(msr.start)
-}
-
-func (msr *MultiMergeStateReader) start() {
-	msr.active = true
-	go msr.bufferNext()
+func getBucketPath(r *regexp.Regexp, s string) (string, error) {
+	matches := r.FindStringSubmatch(s)
+	if len(matches) != 2 {
+		return "", fmt.Errorf("regex string submatch needs full match and one more subgroup, i.e. length should be 2 but was %d", len(matches))
+	}
+	return matches[1], nil
 }
 
 func (msr *MultiMergeStateReader) bufferNext() {
@@ -94,7 +101,7 @@ func (msr *MultiMergeStateReader) bufferNext() {
 		}
 
 		var shouldContinue bool
-		seen, shouldContinue = msr.streamBucketContents(bucketPath, hash, seen)
+		shouldContinue = msr.streamBucketContents(bucketPath, hash, seen)
 		if !shouldContinue {
 			return
 		}
@@ -106,11 +113,11 @@ func (msr *MultiMergeStateReader) streamBucketContents(
 	bucketPath string,
 	hash historyarchive.Hash,
 	seen map[string]bool,
-) (map[string]bool, bool) {
+) bool {
 	rdr, e := msr.archive.GetXdrStream(bucketPath)
 	if e != nil {
 		msr.readChan <- readResult{xdr.LedgerEntry{}, fmt.Errorf("cannot get xdr stream for bucketPath '%s': %s", bucketPath, e)}
-		return seen, false
+		return false
 	}
 	defer rdr.Close()
 
@@ -120,10 +127,10 @@ func (msr *MultiMergeStateReader) streamBucketContents(
 		if e = rdr.ReadOne(&entry); e != nil {
 			if e == io.EOF {
 				// proceed to the next bucket hash
-				return seen, true
+				return true
 			}
 			msr.readChan <- readResult{xdr.LedgerEntry{}, fmt.Errorf("Error on XDR record %d of bucketPath '%s': %s", n, bucketPath, e)}
-			return seen, false
+			return false
 		}
 
 		liveEntry, ok := entry.GetLiveEntry()
@@ -133,11 +140,11 @@ func (msr *MultiMergeStateReader) streamBucketContents(
 			keyBytes, e := key.MarshalBinary()
 			if e != nil {
 				msr.readChan <- readResult{xdr.LedgerEntry{}, fmt.Errorf("Error marshaling XDR record %d of bucketPath '%s': %s", n, bucketPath, e)}
-				return seen, false
+				return false
 			}
 			shasum := fmt.Sprintf("%x", sha256.Sum256(keyBytes))
 
-			if _, exists := seen[shasum]; exists {
+			if seen[shasum] {
 				n++
 				continue
 			}
@@ -159,9 +166,9 @@ func (msr *MultiMergeStateReader) GetSequence() uint32 {
 
 // Read returns a new ledger entry on each call, returning false when the stream ends
 func (msr *MultiMergeStateReader) Read() (bool, xdr.LedgerEntry, error) {
-	if !msr.active {
-		msr.BufferReads()
-	}
+	msr.once.Do(func() {
+		go msr.bufferNext()
+	})
 
 	// blocking call. anytime we consume from this channel, the background goroutine will stream in the next value
 	result, ok := <-msr.readChan

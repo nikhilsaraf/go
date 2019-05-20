@@ -39,7 +39,6 @@ func (haa *HistoryArchiveAdapter) GetState(sequence uint32) (io.StateReader, err
 	if e != nil {
 		return nil, fmt.Errorf("could not make memory state reader: %s", e)
 	}
-	sr.BufferReads()
 
 	return sr, nil
 }
