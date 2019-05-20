@@ -19,8 +19,8 @@ type readResult struct {
 	e     error
 }
 
-// MultiMergeStateReader is the 18-way merge implementation that reads HistoryArchiveState
-type MultiMergeStateReader struct {
+// MemoryStateReader is an in-memory streaming implementation that reads HistoryArchiveState
+type MemoryStateReader struct {
 	has      *historyarchive.HistoryArchiveState
 	archive  *historyarchive.Archive
 	sequence uint32
@@ -29,17 +29,17 @@ type MultiMergeStateReader struct {
 	once     *sync.Once
 }
 
-// enforce MultiMergeStateReader to implement StateReader
-var _ StateReader = &MultiMergeStateReader{}
+// enforce MemoryStateReader to implement StateReader
+var _ StateReader = &MemoryStateReader{}
 
-// MakeMultiMergeStateReader is a factory method for MultiMergeStateReader
-func MakeMultiMergeStateReader(archive *historyarchive.Archive, sequence uint32, bufferSize uint16) (*MultiMergeStateReader, error) {
+// MakeMemoryStateReader is a factory method for MemoryStateReader
+func MakeMemoryStateReader(archive *historyarchive.Archive, sequence uint32, bufferSize uint16) (*MemoryStateReader, error) {
 	has, e := archive.GetCheckpointHAS(sequence)
 	if e != nil {
 		return nil, fmt.Errorf("unable to get checkpoint HAS at ledger sequence %d: %s", sequence, e)
 	}
 
-	return &MultiMergeStateReader{
+	return &MemoryStateReader{
 		has:      &has,
 		archive:  archive,
 		sequence: sequence,
@@ -57,7 +57,7 @@ func getBucketPath(r *regexp.Regexp, s string) (string, error) {
 	return matches[1], nil
 }
 
-func (msr *MultiMergeStateReader) bufferNext() {
+func (msr *MemoryStateReader) bufferNext() {
 	defer close(msr.readChan)
 
 	// iterate from newest to oldest bucket and track keys already seen
@@ -109,7 +109,7 @@ func (msr *MultiMergeStateReader) bufferNext() {
 }
 
 // streamBucketContents pushes value onto the read channel, returning false when the channel needs to be closed otherwise true
-func (msr *MultiMergeStateReader) streamBucketContents(
+func (msr *MemoryStateReader) streamBucketContents(
 	bucketPath string,
 	hash historyarchive.Hash,
 	seen map[string]bool,
@@ -160,12 +160,12 @@ func (msr *MultiMergeStateReader) streamBucketContents(
 }
 
 // GetSequence impl.
-func (msr *MultiMergeStateReader) GetSequence() uint32 {
+func (msr *MemoryStateReader) GetSequence() uint32 {
 	return msr.sequence
 }
 
 // Read returns a new ledger entry on each call, returning false when the stream ends
-func (msr *MultiMergeStateReader) Read() (bool, xdr.LedgerEntry, error) {
+func (msr *MemoryStateReader) Read() (bool, xdr.LedgerEntry, error) {
 	msr.once.Do(func() {
 		go msr.bufferNext()
 	})
