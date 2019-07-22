@@ -1,6 +1,8 @@
 package internal
 
 import (
+	"fmt"
+
 	"github.com/stellar/go/clients/horizonclient"
 	"github.com/stellar/go/keypair"
 	hProtocol "github.com/stellar/go/protocols/horizon"
@@ -8,7 +10,9 @@ import (
 	"github.com/stellar/go/txnbuild"
 )
 
-var ErrAccountExists error = errors.New("createAccountAlreadyExist (AAAAAAAAAGT/////AAAAAQAAAAAAAAAA/////AAAAAA=)")
+const createAccountAlreadyExistXDR = "AAAAAAAAAGT/////AAAAAQAAAAAAAAAA/////AAAAAA="
+
+var ErrAccountExists error = errors.New(fmt.Sprintf("createAccountAlreadyExist (%s)", createAccountAlreadyExistXDR))
 
 // Minion contains a Stellar channel account and Go channels to communicate with friendbot.
 type Minion struct {
@@ -60,8 +64,7 @@ func SubmitTransaction(minion *Minion, hclient *horizonclient.Client, tx string)
 			resStr, resErr := e.ResultString()
 			if resErr != nil {
 				errStr += ": error getting horizon error code: " + resErr.Error()
-			} else if resStr == "AAAAAAAAAGT/////AAAAAQAAAAAAAAAA/////AAAAAA=" {
-				// createAccountAlreadyExist error
+			} else if resStr == createAccountAlreadyExistXDR {
 				return nil, errors.Wrap(ErrAccountExists, errStr)
 			} else {
 				errStr += ": horizon error string: " + resStr
