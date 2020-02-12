@@ -218,7 +218,7 @@ func (l Ledger) PagingToken() string {
 }
 
 // Action needed in release: horizon-v0.25.0: Move back to Offer, remove embedded struct
-type offerBase struct {
+type OfferBase struct {
 	Links struct {
 		Self       hal.Link `json:"self"`
 		OfferMaker hal.Link `json:"offer_maker"`
@@ -237,7 +237,7 @@ type offerBase struct {
 
 // Offer is the display form of an offer to trade currency.
 type Offer struct {
-	offerBase
+	OfferBase
 	// Action needed in release: horizon-v0.25.0: Make id a string
 	ID int64 `json:"id"`
 }
@@ -254,7 +254,7 @@ func (o *Offer) UnmarshalJSON(data []byte) error {
 		ID json.Number `json:"id"`
 	}
 
-	if err := json.Unmarshal(data, &o.offerBase); err != nil {
+	if err := json.Unmarshal(data, &o.OfferBase); err != nil {
 		return err
 	}
 
