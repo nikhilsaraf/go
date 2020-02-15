@@ -690,17 +690,34 @@ type FeeStats struct {
 	LedgerCapacityUsage float64 `json:"ledger_capacity_usage,string"`
 	MinAcceptedFee      int     `json:"min_accepted_fee,string"`
 	ModeAcceptedFee     int     `json:"mode_accepted_fee,string"`
-	P10AcceptedFee      int     `json:"p10_accepted_fee,string"`
-	P20AcceptedFee      int     `json:"p20_accepted_fee,string"`
-	P30AcceptedFee      int     `json:"p30_accepted_fee,string"`
-	P40AcceptedFee      int     `json:"p40_accepted_fee,string"`
-	P50AcceptedFee      int     `json:"p50_accepted_fee,string"`
-	P60AcceptedFee      int     `json:"p60_accepted_fee,string"`
-	P70AcceptedFee      int     `json:"p70_accepted_fee,string"`
-	P80AcceptedFee      int     `json:"p80_accepted_fee,string"`
-	P90AcceptedFee      int     `json:"p90_accepted_fee,string"`
-	P95AcceptedFee      int     `json:"p95_accepted_fee,string"`
-	P99AcceptedFee      int     `json:"p99_accepted_fee,string"`
+	MaxFee              struct {
+		Max  int `json:"max,string"`
+		Min  int `json:"min,string"`
+		Mode int `json:"mode,string"`
+		P10  int `json:"p10,string"`
+		P20  int `json:"p20,string"`
+		P30  int `json:"p30,string"`
+		P40  int `json:"p40,string"`
+		P50  int `json:"p50,string"`
+		P60  int `json:"p60,string"`
+		P70  int `json:"p70,string"`
+		P80  int `json:"p80,string"`
+		P90  int `json:"p90,string"`
+		P95  int `json:"p95,string"`
+		P99  int `json:"p99,string"`
+	} `json:"max_fee"`
+	// don't delete the ones below becasue of tests in this repo etc.
+	P10AcceptedFee int `json:"p10_accepted_fee,string"`
+	P20AcceptedFee int `json:"p20_accepted_fee,string"`
+	P30AcceptedFee int `json:"p30_accepted_fee,string"`
+	P40AcceptedFee int `json:"p40_accepted_fee,string"`
+	P50AcceptedFee int `json:"p50_accepted_fee,string"`
+	P60AcceptedFee int `json:"p60_accepted_fee,string"`
+	P70AcceptedFee int `json:"p70_accepted_fee,string"`
+	P80AcceptedFee int `json:"p80_accepted_fee,string"`
+	P90AcceptedFee int `json:"p90_accepted_fee,string"`
+	P95AcceptedFee int `json:"p95_accepted_fee,string"`
+	P99AcceptedFee int `json:"p99_accepted_fee,string"`
 }
 
 // TransactionsPage contains records of transaction information returned by Horizon
