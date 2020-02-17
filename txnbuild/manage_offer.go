@@ -71,6 +71,29 @@ func DeleteOfferOp(offerID int64, sourceAccount ...Account) (ManageSellOffer, er
 	return offer, nil
 }
 
+//DeleteOfferOp2 returns a ManageSellOffer operation to delete an offer, by
+// setting the Amount to "0". The sourceAccount is optional, and if not provided,
+// will be that of the surrounding transaction.
+func DeleteOfferOp2(offer ManageSellOffer, sourceAccount ...Account) (ManageSellOffer, error) {
+	if len(sourceAccount) > 1 {
+		return ManageSellOffer{}, errors.New("offer can't have multiple source accounts")
+	}
+
+	newOffer := ManageSellOffer{
+		Selling: offer.Selling,
+		Buying:  offer.Buying,
+		Amount:  "0",
+		Price:   offer.Price,
+		OfferID: offer.OfferID,
+	}
+
+	if len(sourceAccount) == 1 {
+		newOffer.SourceAccount = sourceAccount[0]
+	}
+
+	return newOffer, nil
+}
+
 // ManageSellOffer represents the Stellar manage offer operation. See
 // https://www.stellar.org/developers/guides/concepts/list-of-operations.html
 type ManageSellOffer struct {
